@@ -1,968 +1,245 @@
 <!DOCTYPE html>
-<html data-theme="dark" lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬡</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCNA Mindmap</title>
-<script>
-/* Load markmap-autoloader from CDN with automatic fallback */
-(function () {
-  var srcs = [
-    'https://cdn.jsdelivr.net/npm/markmap-autoloader@0.17',
-    'https://unpkg.com/markmap-autoloader@0.17/dist/browser/index.js',
-    'https://esm.sh/markmap-autoloader@0.17?bundle'
-  ];
-  var i = 0;
-  function next() {
-    if (i >= srcs.length) {
-      document.getElementById('loader').innerHTML =
-        '<div style="color:#f87171;font-size:13px;text-align:center">' +
-        'All CDNs failed — check your internet connection</div>';
-      return;
-    }
-    var s = document.createElement('script');
-    s.src = srcs[i++];
-    s.onerror = next;
-    document.head.appendChild(s);
-  }
-  next();
-}());
-</script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-autoloader@0.17"></script>
 <style>
-:root { --toolbar-h: 48px; }
-
-[data-theme="dark"] {
-  --bg: #0d0f1a; --canvas: #0d0f1a; --surface: #141728;
-  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
-  --text: #dde1f5; --dim: #7880a0;
-  --accent: #7c6ff7; --accent-bg: rgba(124,111,247,0.14); --accent-brd: rgba(124,111,247,0.28);
-  --btn: rgba(255,255,255,0.05); --btn-hover: rgba(255,255,255,0.11);
-  --node-text: #dde1f5; --link: rgba(255,255,255,0.15);
-}
-[data-theme="light"] {
-  --bg: #f4f5fb; --canvas: #ffffff; --surface: #ffffff;
-  --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.16);
-  --text: #191b2e; --dim: #5d6480;
-  --accent: #5b50e8; --accent-bg: rgba(91,80,232,0.08); --accent-brd: rgba(91,80,232,0.22);
-  --btn: rgba(0,0,0,0.04); --btn-hover: rgba(0,0,0,0.09);
-  --node-text: #191b2e; --link: rgba(0,0,0,0.18);
+:root {
+  --toolbar-h: 56px;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;
-  background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  transition:background .2s,color .2s}
-
-/* Toolbar */
-#toolbar{
-  position:fixed;top:0;left:0;right:0;z-index:200;
-  height:var(--toolbar-h);
-  background:var(--surface);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:4px;padding:0 14px;
-  transition:background .2s,border-color .2s;
-}
-.logo{display:flex;align-items:center;gap:7px;margin-right:8px;flex-shrink:0}
-.logo-dot{width:26px;height:26px;border-radius:7px;
-  background:var(--accent-bg);border:1px solid var(--accent-brd);
-  display:flex;align-items:center;justify-content:center;font-size:13px}
-.logo-name{font-size:13px;font-weight:600;letter-spacing:.01em}
-.logo-pill{font-size:10px;font-weight:600;letter-spacing:.04em;
-  color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-brd);
-  padding:2px 6px;border-radius:4px}
-.sep{width:1px;height:18px;background:var(--border);margin:0 6px;flex-shrink:0}
-.btn{
-  height:30px;min-width:30px;
-  background:var(--btn);border:1px solid var(--border);color:var(--dim);
-  padding:0 10px;border-radius:7px;
-  font-size:12px;font-weight:500;cursor:pointer;
-  display:inline-flex;align-items:center;justify-content:center;gap:5px;
-  transition:all .15s;white-space:nowrap;font-family:inherit;flex-shrink:0;
-}
-.btn:hover{background:var(--btn-hover);color:var(--text);border-color:var(--border2)}
-.btn:active{transform:scale(.96)}
-.btn.sq{padding:0;width:30px}
-#btn-theme{border-color:var(--accent-brd);color:var(--accent);background:var(--accent-bg)}
-#btn-theme:hover{opacity:.8}
-.spacer{flex:1}
-.hints{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:3px;flex-shrink:0}
-.hints kbd{font-size:10px;background:rgba(128,128,128,.12);
-  border:1px solid var(--border2);padding:1px 5px;border-radius:3px;font-family:inherit}
-
-/* Loader */
-#loader{
-  position:fixed;inset:0;top:var(--toolbar-h);
-  background:var(--bg);z-index:100;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
-  transition:opacity .35s;
-}
-.spin{width:28px;height:28px;border-radius:50%;
-  border:2px solid var(--border2);border-top-color:var(--accent);
-  animation:spin .75s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spin-label{font-size:12px;color:var(--dim)}
-
-/* Map */
-#map-wrap{position:fixed;top:var(--toolbar-h);left:0;right:0;bottom:0}
-#map-wrap svg{
-  width:100%!important;height:100%!important;
-  background:var(--canvas)!important;transition:background .2s;
+html[data-theme="light"] {
+  --bg: #eef3f9;
+  --surface: rgba(255,255,255,0.92);
+  --surface-solid: #ffffff;
+  --surface-2: #f6f9fd;
+  --border: #d8e1ee;
+  --border-strong: #c5d1e3;
+  --text: #142033;
+  --text-soft: #52627b;
+  --accent: #4457d6;
+  --accent-soft: rgba(68,87,214,0.1);
+  --btn-bg: #f4f7fc;
+  --btn-border: #cfd9e8;
+  --btn-hover: #e9eff8;
+  --canvas: #fbfdff;
+  --node-text: #162235;
+  --node-secondary: #43546f;
+  --node-hover: rgba(68,87,214,0.08);
+  --root-fill: rgba(68,87,214,0.08);
+  --root-stroke: rgba(68,87,214,0.22);
 }
 
-/* Force readable text and lines */
-#map-wrap svg text{fill:var(--node-text)!important}
-#map-wrap svg path.markmap-link{stroke:var(--link)!important}
-#map-wrap svg .markmap-node-bg{fill:transparent!important}
-#map-wrap svg .markmap-node:hover .markmap-node-bg{fill:var(--accent-bg)!important}
-#map-wrap svg circle{stroke:var(--link)!important}
-#map-wrap svg .markmap-node:hover circle{stroke:var(--accent)!important}
+html[data-theme="dark"] {
+  --bg: #111827;
+  --surface: rgba(20, 28, 45, 0.92);
+  --surface-solid: #172033;
+  --surface-2: #1d2940;
+  --border: #2c3a56;
+  --border-strong: #3a4b6d;
+  --text: #edf3ff;
+  --text-soft: #b6c5de;
+  --accent: #bcc7ff;
+  --accent-soft: rgba(188,199,255,0.12);
+  --btn-bg: #22304a;
+  --btn-border: #3b4d71;
+  --btn-hover: #2a3a59;
+  --canvas: #162031;
+  --node-text: #eef4ff;
+  --node-secondary: #c4d1e7;
+  --node-hover: rgba(255,255,255,0.07);
+  --root-fill: rgba(188,199,255,0.10);
+  --root-stroke: rgba(188,199,255,0.24);
+}
 
-/* Off-screen — autoloader must still find it to load its dependencies */
-.markmap{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;visibility:hidden}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  transition: background .2s ease, color .2s ease;
+}
+body {
+  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+#toolbar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 100;
+  height: var(--toolbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 18px;
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.02), var(--shadow);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  border: 1px solid var(--root-stroke);
+  color: var(--accent);
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brand-title {
+  font-size: 14px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.brand-subtitle {
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-switch {
+  appearance: none;
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--text);
+  border-radius: 999px;
+  height: 34px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  font: 600 12px/1 Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.theme-switch:hover {
+  background: var(--btn-hover);
+  border-color: var(--border-strong);
+}
+.theme-switch:active {
+  transform: scale(.985);
+}
+.theme-switch svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+  color: var(--accent);
+}
+
+.markmap {
+  position: fixed;
+  inset: var(--toolbar-h) 0 0 0;
+}
+svg.markmap {
+  width: 100%;
+  height: 100%;
+  background: var(--canvas) !important;
+}
+
+svg.markmap .markmap-node > text {
+  fill: var(--node-secondary) !important;
+  font-weight: 520;
+}
+
+svg.markmap .markmap-node[data-depth="0"] > text {
+  fill: var(--text) !important;
+  font-weight: 780;
+}
+
+svg.markmap .markmap-node[data-depth="1"] > text {
+  font-weight: 700;
+}
+
+svg.markmap .markmap-node-bg {
+  fill: transparent !important;
+  rx: 8px;
+  ry: 8px;
+}
+
+svg.markmap .markmap-node:hover .markmap-node-bg {
+  fill: var(--node-hover) !important;
+}
+
+svg.markmap .markmap-node[data-depth="0"] > .markmap-node-bg {
+  fill: var(--root-fill) !important;
+  stroke: var(--root-stroke) !important;
+  stroke-width: 1;
+}
+
+svg.markmap circle {
+  transition: stroke .15s ease, fill .15s ease, stroke-width .15s ease;
+}
+
+@media (max-width: 720px) {
+  :root { --toolbar-h: 52px; }
+  #toolbar { padding: 0 12px; }
+  .brand-subtitle { display: none; }
+}
 </style>
-<script>
-const CCNA_MD = `
-# CCNA Mindmap
-
-## 1. Networking Fundamentals
-
-### OSI Model & TCP/IP Suite
-- 📖 7 layers: Physical → Data Link → Network → Transport → Session → Presentation → Application
-  - PDUs: Bit (L1), Frame (L2), Packet (L3), Segment (L4), Data (L5-7)
-  - Encapsulation downward · de-encapsulation upward
-  - TCP/IP 4-layer: Network Access, Internet, Transport, Application
-- 🔗 OSI Layer: ALL layers
-- ⚙️ Commands
-  - \`show ip interface brief\` — L3 status
-  - \`show interfaces <int>\` — L1/L2 counters and errors
-  - \`ping <ip>\` — ICMP L3 reachability
-  - \`show arp\` — L2/L3 ARP table
-- 🔧 Troubleshooting
-  - ⚠️ down/down → L1 (cable/SFP) → replace cable
-  - ⚠️ up/down → L2 encapsulation mismatch → check both ends
-  - ⚠️ Ping fails, interface up/up → L3 no route → \`show ip route\`
-
-### Network Devices
-- 📖 Roles
-  - Router: L3, forwards between networks
-  - Switch: L2, forwards within LAN
-  - Firewall/NGFW: L3–L7, DPI traffic filtering
-  - AP: wireless connectivity (L1/L2)
-  - WLC / DNA Center: centrally manages APs and SD-Access
-  - PoE Switch: powers phones, APs, cameras over Ethernet
-- 🔗 OSI Layer: Router=L3, Switch=L2, AP=L1/2, Firewall=L3-7
-- ⚙️ Commands
-  - [IOS/IOS-XE] \`interface GigabitEthernet0/0\` → \`ip address 192.168.1.1 255.255.255.0\` → \`no shutdown\`
-  - [IOS-XR] \`interface GigabitEthernet0/0/0/0\` → \`ipv4 address 192.168.1.1/24\` → \`no shutdown\`
-- 🔍 Verification
-  - \`show ip interface brief\` | \`show version\`
-- 🔧 Troubleshooting
-  - ⚠️ Interface admin down → forgot \`no shutdown\`
-  - ⚠️ Up/up but no traffic → duplex/speed mismatch → \`show interfaces\` → force settings
-
-### Interfaces & Cables
-- 📖 Cable Standards
-  - UTP copper: RJ-45, IEEE 802.3, max 100m
-  - 10/100BASE-T: 2 pairs | 1000BASE-T/10GBASE-T: 4 pairs bidirectional
-  - Auto MDI-X auto-detects cable type
-  - SMF: laser, up to 80km | MMF: LED, up to 550m, cheaper
-- 🔗 OSI Layer: Layer 1 (Physical)
-- ⚙️ Commands
-  - \`speed 1000\` + \`duplex full\` | \`description ## to SW1 ##\`
-- 🔍 Verification
-  - \`show interfaces <int>\` | \`show interfaces status\` (switch)
-- 🔧 Troubleshooting
-  - ⚠️ High CRC errors → bad cable or duplex mismatch → replace or force settings
-  - ⚠️ Runts (<64B) → duplex mismatch → force \`duplex full\`
-  - ⚠️ Giants (>1518B) → jumbo frames one-sided → align MTU both sides
-
-### IPv4 Addressing & Subnetting
-- 📖 Key Concepts
-  - 32-bit, 4 octets dotted decimal with CIDR prefix
-  - Usable hosts = 2^n − 2 (n = host bits)
-  - Class A /8 (1–126), B /16 (128–191), C /24 (192–223)
-  - Private (RFC 1918): 10/8, 172.16/12, 192.168/16
-  - Network = all host bits 0 | Broadcast = all host bits 1
-  - VLSM: variable-length subnets for efficient addressing
-- 🔗 OSI Layer: Layer 3 (Network)
-- ⚙️ Commands
-  - [IOS/IOS-XE] \`ip address 192.168.1.1 255.255.255.0\`
-  - [IOS-XR] \`ipv4 address 192.168.1.1/24\`
-  - Windows: \`ipconfig /all\` | Linux: \`ip addr show\`
-- 🔧 Troubleshooting
-  - ⚠️ Can't reach gateway → wrong subnet mask → reconfigure host
-  - ⚠️ 169.254.x.x (APIPA) → DHCP failure → \`ipconfig /release\` then \`/renew\`
-
-### IPv6 Addressing
-- 📖 Address Types
-  - 128-bit, 8 groups of 16-bit hex, colon-separated, lowercase
-  - Shorten: remove leading zeros · :: for longest all-zero run (once only)
-  - Global Unicast 2000::/3 (public) | Unique Local FDxx::/48 (private)
-  - Link-Local FE80::/10 (auto-generated) | Multicast FF00::/8
-  - EUI-64: insert FFFE into MAC and flip 7th bit
-  - SLAAC: auto-config via NDP Router Advertisements (NDP replaces ARP)
-- 🔗 OSI Layer: Layer 3 (Network)
-- 📋 Prerequisites: \`ipv6 unicast-routing\` must be enabled globally
-- ⚙️ Commands
-  - \`ipv6 unicast-routing\` (global)
-  - \`ipv6 address 2001:db8::1/64\` on interface
-  - EUI-64: \`ipv6 address 2001:db8::/64 eui-64\`
-  - SLAAC: \`ipv6 address autoconfig\`
-- 🔍 Verification
-  - \`show ipv6 interface brief\` | \`show ipv6 neighbors\` | \`show ipv6 route\`
-- 🔧 Troubleshooting
-  - ⚠️ IPv6 not routing → \`ipv6 unicast-routing\` missing
-  - ⚠️ Neighbors not forming → \`ipv6 enable\` on interface
-
-### TCP vs UDP
-- 📖 TCP: connection-oriented, reliable
-  - 3-way handshake: SYN → SYN-ACK → ACK
-  - ACKs, retransmissions, sequencing, flow control
-  - Use for: HTTP/S, SSH, FTP, SMTP, BGP
-- 📖 UDP: connectionless, best-effort
-  - No handshake, lower overhead, faster
-  - Use for: DNS, DHCP, TFTP, SNMP, NTP, VoIP, Video
-- 🔗 OSI Layer: Layer 4 (Transport)
-- ⚙️ Key Port Numbers
-  - TCP: FTP 20/21, SSH 22, Telnet 23, HTTP 80, HTTPS 443
-  - UDP: DNS 53, DHCP 67/68, TFTP 69, SNMP 161/162, Syslog 514, NTP 123
-- 🔧 Troubleshooting
-  - ⚠️ App unreachable, ping works → port blocked → \`show access-lists\`
-  - ⚠️ Slow transfer → TCP window / packet loss → \`show interfaces\`
-
-### Wireless Principles
-- 📖 Key Concepts
-  - 2.4 GHz: better range, congested, non-overlapping channels: 1, 6, 11
-  - 5 GHz: more non-overlapping channels, less congestion, shorter range
-  - SSID: human-readable network name | CSMA/CA: collision avoidance
-  - WPA2 (CCMP/AES) current | WPA3 (GCMP/AES) latest
-- 🔗 OSI Layer: L1 and L2
-- 🔧 Troubleshooting
-  - ⚠️ Poor signal → channel overlap → use analyzer → non-overlapping channel
-  - ⚠️ Connects but no internet → DHCP not reachable → check VLAN tag on trunk
-
-### Virtualization Fundamentals
-- 📖 Types
-  - Type 1 Hypervisor (bare-metal): VMware ESXi, Hyper-V — data center
-  - Type 2 Hypervisor (hosted): VMware Workstation, VirtualBox — personal
-  - Containers (Docker): share host OS kernel, ~ms boot, Kubernetes orchestration
-  - VRF: multiple routing tables on one router — Layer 3 segmentation
-- 🔗 OSI Layer: L3 for VRF; L1/L2 for virtual switches
-- ⚙️ VRF Commands
-  - [IOS/IOS-XE] \`ip vrf CUST_A\` → interface: \`ip vrf forwarding CUST_A\` → \`ip address ...\`
-  - [IOS-XR] \`vrf CUST_A\` → interface: \`vrf CUST_A\` → \`ipv4 address ...\`
-- 🔍 Verification
-  - \`show ip vrf\` | \`show ip route vrf CUST_A\` | \`ping vrf CUST_A 10.1.1.2\`
-
----
-
-## 2. Network Access
-
-### VLANs
-- 📖 Logically segments a switch into separate broadcast domains
-  - VLAN ID range: 1–4094 (normal: 1–1005, extended: 1006–4094)
-  - VLAN 1 = default, cannot be deleted
-  - Traffic between VLANs requires Layer 3 routing
-- 🔗 OSI Layer: Layer 2 (Data Link)
-- 📋 Prerequisites: Plan VLAN IDs and subnets. VLANs must exist on ALL switches in the path
-- ⚙️ Access Port
-  - \`vlan 10\` → \`name SALES\`
-  - \`switchport mode access\` → \`switchport access vlan 10\`
-  - Voice VLAN: \`switchport voice vlan 20\`
-- ⚙️ Trunk Port
-  - \`switchport trunk encapsulation dot1q\` (if needed)
-  - \`switchport mode trunk\` → \`switchport trunk allowed vlan 10,20,30\`
-  - \`switchport trunk native vlan 99\`
-- 🔍 Verification
-  - \`show vlan brief\` | \`show interfaces trunk\` | \`show interfaces <int> switchport\`
-- 🔧 Troubleshooting
-  - ⚠️ Host can't reach same-VLAN host → port not in correct VLAN → reassign
-  - ⚠️ VLAN not crossing trunk → not in allowed list → \`switchport trunk allowed vlan add <id>\`
-  - ⚠️ Native VLAN mismatch → \`switchport trunk native vlan <id>\` on BOTH sides
-
-### Trunking (802.1Q)
-- 📖 Carries multiple VLANs over a single link
-  - 802.1Q tag (4 bytes): 12-bit VID, 3-bit PCP (QoS), 1-bit DEI
-  - Native VLAN sent untagged — must match both ends
-  - ISL: Cisco proprietary, obsolete — use 802.1Q only
-  - DTP auto-negotiates trunks — disable on production ports
-- 🔗 OSI Layer: Layer 2 (Data Link)
-- ⚙️ Commands
-  - \`switchport trunk encapsulation dot1q\` → \`switchport mode trunk\`
-  - \`switchport trunk native vlan 99\` → \`switchport nonegotiate\`
-- 🔍 Verification
-  - \`show interfaces trunk\` | \`show interfaces <int> switchport\`
-- 🔧 Troubleshooting
-  - ⚠️ Native VLAN mismatch in logs → align on BOTH sides
-  - ⚠️ VLAN not active on trunk → VLAN not created locally → \`vlan <id>\`
-  - ⚠️ Trunk not forming → force both sides \`switchport mode trunk\`
-
-### Spanning Tree Protocol
-- 📖 Prevents L2 loops by blocking redundant ports
-  - Root Bridge: lowest Bridge ID (priority + MAC)
-  - Root Port: best path to Root Bridge | Designated: best port per segment
-  - STP states: Blocking → Listening (15s) → Learning (15s) → Forwarding
-  - RSTP (802.1w): ~1–2s convergence via handshake
-  - Port cost: 10Gbps=2, 1Gbps=4, 100Mbps=19, 10Mbps=100
-- 🔗 OSI Layer: Layer 2 (Data Link)
-- 📋 Prerequisites: PortFast ONLY on end-host ports. BPDU Guard on all access ports
-- ⚙️ Commands
-  - \`spanning-tree vlan 10 root primary\` (priority 24576)
-  - \`spanning-tree vlan 10 root secondary\` (priority 28672)
-  - PortFast per-port: \`spanning-tree portfast\`
-  - BPDU Guard: \`spanning-tree bpduguard enable\`
-  - \`spanning-tree mode rapid-pvst\`
-- 🔍 Verification
-  - \`show spanning-tree\` | \`show spanning-tree vlan 10\`
-- 🔧 Troubleshooting
-  - ⚠️ Broadcast storm → L2 loop → disable offending port immediately
-  - ⚠️ Port stuck in BLK → wrong Root Bridge → manually configure correct root
-  - ⚠️ PortFast port err-disabled → switch plugged into access port → unplug → shutdown/no shutdown
-
-### EtherChannel (LACP)
-- 📖 Bundles multiple links into one logical interface
-  - STP sees as single link — no ports blocked
-  - LACP (IEEE 802.3ad): active initiates, passive waits
-  - PAgP (Cisco): desirable initiates, auto waits
-  - Static \`on\`: both sides must be \`on\`, no negotiation
-  - All members must match: speed, duplex, VLAN config
-- 🔗 OSI Layer: L2 (and L3 for Layer 3 EtherChannel)
-- ⚙️ Commands
-  - \`interface range GigabitEthernet0/0 - 3\` → \`channel-group 1 mode active\`
-  - \`interface port-channel 1\` → configure trunk/access/IP
-  - [IOS-XR] \`interface Bundle-Ether1\` → member: \`bundle id 1 mode active\`
-- 🔍 Verification
-  - \`show etherchannel summary\` — P=bundled, s=suspended, D=down
-  - \`show lacp neighbor\`
-- 🔧 Troubleshooting
-  - ⚠️ Port shows \`s\` → config mismatch → \`show etherchannel detail\` → align config
-  - ⚠️ Channel not forming → both sides passive → one must be \`active\`
-  - ⚠️ Uneven traffic → \`port-channel load-balance src-dst-ip\`
-
-### CDP and LLDP
-- 📖 Layer 2 neighbor discovery
-  - CDP: Cisco proprietary, ON by default, 60s/180s timer
-  - LLDP: IEEE 802.1AB, OFF by default, 30s/120s timer, 2s reinit delay
-  - Reveals hostname, IP, device type, IOS version — disable on external ports
-- 🔗 OSI Layer: Layer 2 (Data Link)
-- ⚙️ Commands
-  - CDP: \`no cdp run\` (global) | \`no cdp enable\` (per-interface)
-  - LLDP: \`lldp run\` global | \`lldp transmit\` AND \`lldp receive\` per-interface
-- 🔍 Verification
-  - \`show cdp neighbors detail\` | \`show lldp neighbors detail\`
-- 🔧 Troubleshooting
-  - ⚠️ CDP neighbor missing → CDP disabled one side → \`show cdp interface\`
-  - ⚠️ LLDP neighbor missing → tx/rx not both enabled → \`lldp transmit\` + \`lldp receive\`
-
-### Wireless Architectures
-- 📖 AP Deployment Models
-  - Autonomous AP: self-contained, individual config, small networks only
-  - Lightweight AP (CAPWAP split-MAC)
-    - AP handles: RF, encryption, beacons, packet prioritization
-    - WLC handles: auth, QoS, roaming, channel/power assignment
-    - CAPWAP: UDP 5246 control (encrypted), UDP 5247 data
-    - AP connects to switch ACCESS port (not trunk)
-  - Cloud-based (Cisco Meraki): cloud management, local data forwarding
-- 📖 WLC Deployment Modes
-  - Unified HW appliance: up to 6000 APs | Cloud VM: up to 3000 APs
-  - Embedded in switch: up to 200 APs | Mobility Express in AP: up to 100 APs
-- 🔗 OSI Layer: L1/L2 wireless, L3 CAPWAP tunnels
-- 🔧 Troubleshooting
-  - ⚠️ AP not joining WLC → CAPWAP failing → check DHCP Option 43 → \`debug capwap client errors\`
-  - ⚠️ No IP for clients → DHCP not reaching WLC dynamic interface → check VLAN mapping
-
-### Port Security
-- 📖 Restricts which MACs can send on a switchport
-  - Default: 1 MAC, violation = shutdown (err-disable)
-  - Shutdown: err-disable + syslog | Restrict: drop + log + count | Protect: drop silently
-  - Sticky: saves dynamically learned MACs to running-config permanently
-- 🔗 OSI Layer: Layer 2 (Data Link)
-- ⚙️ Commands
-  - \`switchport mode access\` → \`switchport port-security\`
-  - \`switchport port-security maximum 2\`
-  - \`switchport port-security mac-address sticky\`
-  - \`switchport port-security violation restrict\`
-  - Auto-recover: \`errdisable recovery cause psecure-violation\`
-- 🔍 Verification
-  - \`show port-security interface <int>\` | \`show port-security address\`
-- 🔧 Troubleshooting
-  - ⚠️ Port err-disabled → unauthorized device → shutdown/no shutdown or errdisable recovery
-  - ⚠️ Legit device blocked → max too low → increase \`switchport port-security maximum\`
-
-### DHCP Snooping
-- 📖 Filters DHCP messages on untrusted switch ports
-  - All ports untrusted by default — mark uplinks as trusted
-  - Drops DHCP Server msgs on untrusted ports (OFFER/ACK/NAK)
-  - Validates Client CHADDR field vs source MAC
-  - Builds DHCP Snooping Binding Table (required by DAI)
-- 🔗 OSI Layer: Layer 2 (Data Link)
-- ⚙️ Commands
-  - \`ip dhcp snooping\` → \`ip dhcp snooping vlan 10,20\`
-  - Uplink: \`ip dhcp snooping trust\`
-  - Rate-limit: \`ip dhcp snooping limit rate 15\`
-  - Disable Option 82: \`no ip dhcp snooping information option\`
-- 🔍 Verification
-  - \`show ip dhcp snooping\` | \`show ip dhcp snooping binding\`
-- 🔧 Troubleshooting
-  - ⚠️ Clients not getting DHCP → uplink not trusted → \`ip dhcp snooping trust\`
-  - ⚠️ "inconsistent relay info" → Option 82 mismatch → \`no ip dhcp snooping information option\`
-
-### Dynamic ARP Inspection (DAI)
-- 📖 Validates ARP packets vs DHCP Snooping binding table on untrusted ports
-  - Sender MAC ≠ binding entry → ARP dropped — prevents ARP poisoning (MitM)
-  - Trusted ports forward all ARP normally
-  - ARP ACLs needed for hosts with static IPs
-- 🔗 OSI Layer: Layer 2 (Data Link)
-- 📋 Prerequisites: DHCP Snooping enabled and binding table populated first
-- ⚙️ Commands
-  - \`ip arp inspection vlan 10,20\`
-  - Uplink: \`ip arp inspection trust\`
-  - \`ip arp inspection limit rate 100\`
-  - Optional: \`ip arp inspection validate src-mac dst-mac ip\`
-- 🔍 Verification
-  - \`show ip arp inspection\` | \`show ip arp inspection interfaces\`
-- 🔧 Troubleshooting
-  - ⚠️ Legit ARP dropped → static IP not in snooping table → create ARP ACL
-  - ⚠️ Port err-disabled → \`errdisable recovery cause arp-inspection\`
-
----
-
-## 3. IP Connectivity
-
-### Routing Table & Forwarding
-- 📖 Forwarding decision order
-  - Longest prefix match wins (most specific route)
-  - Tie → lowest Administrative Distance (AD)
-  - Tie → lowest metric
-  - Default route: 0.0.0.0/0 = Gateway of Last Resort
-  - Codes: C=Connected, L=Local, S=Static, O=OSPF, D=EIGRP, R=RIP
-- 📖 AD Values (memorize)
-  - Connected=0, Static=1, EIGRP Int=90, OSPF=110, RIP=120, EIGRP Ext=170, Unusable=255
-- 🔗 OSI Layer: Layer 3 (Network)
-- 🔍 Verification
-  - \`show ip route\` | \`show ip route 10.1.1.0\` | \`show ip protocols\`
-- 🔧 Troubleshooting
-  - ⚠️ Wrong path → less-specific route winning → add more-specific route
-  - ⚠️ "Destination unreachable" → no route → \`show ip route\` → add route
-  - ⚠️ Route flapping → neighbor instability → \`debug ip routing\`
-
-### Static Routing
-- 📖 Manually configured routes — no auto-adaptation to failures
-  - Network, Host (/32), Default (0.0.0.0/0), Floating static (backup via higher AD)
-  - On Ethernet: always specify next-hop IP (not just exit interface)
-- 🔗 OSI Layer: Layer 3 (Network)
-- ⚙️ Commands
-  - Network: \`ip route 10.1.0.0 255.255.0.0 192.168.1.2\`
-  - Default: \`ip route 0.0.0.0 0.0.0.0 203.0.113.1\`
-  - Floating: \`ip route 10.1.0.0 255.255.0.0 192.168.2.2 200\` (AD=200 > OSPF 110)
-  - IPv6: \`ipv6 route 2001:db8:1::/64 2001:db8:12::2\`
-  - [IOS-XR] \`router static\` → \`address-family ipv4 unicast\` → \`10.1.0.0/16 192.168.1.2\`
-- 🔍 Verification
-  - \`show ip route static\` | \`show ip route 10.1.0.0\`
-- 🔧 Troubleshooting
-  - ⚠️ Static route missing → next-hop unreachable → verify next-hop reachability
-  - ⚠️ Floating static not activating → AD too low → must exceed primary protocol AD
-
-### OSPF (OSPFv2)
-- 📖 Link-State IGP using Dijkstra's SPF algorithm
-  - All areas connect to Area 0 (backbone) | ABR = router in multiple areas (max 2)
-  - Cost = reference BW / interface BW (default ref = 100 Mbps — too low for Gigabit)
-  - Router ID: manual > highest loopback > highest physical IP
-  - DR/BDR election: highest priority (default=1) then highest RID
-  - Timers: Hello=10s, Dead=40s (Ethernet)
-- 📖 Neighbor states: Down → Init → 2-Way → ExStart → Exchange → Loading → Full
-- 🔗 OSI Layer: L3, IP protocol 89, multicast 224.0.0.5/224.0.0.6
-- 📋 Prerequisites: Area#, Hello/Dead timers, subnet, MTU, network type, unique RIDs must match
-- ⚙️ Commands [IOS/IOS-XE]
-  - \`router ospf 1\` → \`router-id 1.1.1.1\`
-  - \`auto-cost reference-bandwidth 10000\` (set on ALL routers)
-  - \`network 10.0.0.0 0.0.0.255 area 0\`
-  - \`passive-interface GigabitEthernet0/1\`
-  - Per-interface: \`ip ospf 1 area 0\`
-  - Manual cost: \`ip ospf cost 100\` | Prevent DR: \`ip ospf priority 0\`
-- ⚙️ Commands [IOS-XR]
-  - \`router ospf 1\` → \`router-id 1.1.1.1\` → \`area 0\` → \`interface GigabitEthernet0/0/0/0\`
-- 🔍 Verification
-  - \`show ip ospf neighbor\` — must reach FULL
-  - \`show ip ospf interface brief\` | \`show ip ospf database\` | \`show ip route ospf\`
-- 🔧 Troubleshooting
-  - ⚠️ Stuck in INIT → ACL blocking 224.0.0.5 → \`debug ip ospf hello\`
-  - ⚠️ Stuck in EXSTART/EXCHANGE → MTU mismatch → \`ip ospf mtu-ignore\` or align MTU
-  - ⚠️ Neighbors up, routes missing → network type mismatch → \`ip ospf network <type>\`
-  - ⚠️ Wrong cost → \`auto-cost reference-bandwidth\` not updated on ALL routers
-
-### EIGRP
-- 📖 Advanced distance-vector IGP — Cisco, now open standard
-  - DUAL algorithm | Metric = bandwidth (slowest) + delay (all links)
-  - FD = Feasible Distance | RD = Reported Distance (neighbor's metric)
-  - Successor = best route | Feasible Successor = backup where RD < Successor FD
-  - Unequal-cost LB via \`variance\` | Multicast 224.0.0.10 | AD: Internal=90, External=170
-- 🔗 OSI Layer: L3, IP protocol 88
-- 📋 Prerequisites: AS number must match on all routers. \`no auto-summary\` recommended
-- ⚙️ Commands [IOS/IOS-XE]
-  - \`router eigrp 100\` → \`no auto-summary\` → \`eigrp router-id 1.1.1.1\`
-  - \`network 10.0.0.0 0.0.255.255\` → \`passive-interface GigabitEthernet0/1\`
-  - Unequal-cost LB: \`variance 2\`
-- 🔍 Verification
-  - \`show ip eigrp neighbors\` | \`show ip eigrp topology\` | \`show ip route eigrp\`
-- 🔧 Troubleshooting
-  - ⚠️ Neighbor not forming → AS number mismatch → verify both sides
-  - ⚠️ Neighbor up, routes missing → \`auto-summary\` wrong → \`no auto-summary\`
-  - ⚠️ Stuck in Active (SIA) → query timeout → add route summarization
-
-### Inter-VLAN Routing
-- 📖 Two main options
-  - Router on a Stick (ROAS): one router interface + dot1q sub-interfaces per VLAN
-  - Multilayer Switch SVIs: virtual L3 interfaces per VLAN, requires \`ip routing\`
-- 🔗 OSI Layer: Layer 3 (Network)
-- 📋 Prerequisites
-  - ROAS: switch port facing router must be trunk
-  - SVIs: \`ip routing\` enabled, VLAN exists, active port in VLAN, SVI not shutdown
-- ⚙️ ROAS
-  - \`interface GigabitEthernet0/0.10\` → \`encapsulation dot1q 10\` → \`ip address 192.168.10.1 255.255.255.0\`
-- ⚙️ SVI (Multilayer Switch)
-  - \`ip routing\`
-  - \`interface vlan 10\` → \`ip address 192.168.10.1 255.255.255.0\` → \`no shutdown\`
-  - Routed uplink: \`no switchport\` → \`ip address ...\`
-- 🔍 Verification
-  - \`show ip route\` | \`show interface vlan 10\`
-- 🔧 Troubleshooting
-  - ⚠️ ROAS not routing → VLAN tag mismatch → \`encapsulation dot1q\` must match VLAN ID
-  - ⚠️ SVI down/down → VLAN missing or no active port → \`show vlan brief\`
-  - ⚠️ VLANs can't reach each other → \`ip routing\` missing on multilayer switch
-
-### FHRP (HSRP / VRRP / GLBP)
-- 📖 First Hop Redundancy — gateway failover
-  - Shared VIP — hosts use as default gateway
-  - Active/Master responds with virtual MAC
-  - Non-preemptive by default — configure \`preempt\` to auto-restore
-  - Gratuitous ARP updates switches on failover
-- 📖 Protocols
-  - HSRP: Cisco, active/standby, v2 multicast 224.0.0.102
-  - VRRP: Open standard, master/backup, 224.0.0.18
-  - GLBP: Cisco, load-balances across Active Virtual Forwarders, 224.0.0.102
-- 🔗 OSI Layer: Layer 3 (Network)
-- ⚙️ HSRP
-  - \`standby version 2\` → \`standby 1 ip 192.168.1.254\`
-  - \`standby 1 priority 110\` → \`standby 1 preempt\`
-- 🔍 Verification
-  - \`show standby\` | \`show standby brief\`
-- 🔧 Troubleshooting
-  - ⚠️ Both routers Active → hellos not reaching each other → check multicast path
-  - ⚠️ Traffic still going to failed router → stale ARP → \`clear arp-cache\` on switch
-
----
-
-## 4. IP Services
-
-### NAT
-- 📖 Three NAT Types
-  - Static NAT: 1-to-1 permanent mapping — also allows inbound connections to inside hosts
-  - Dynamic NAT: pool of public IPs dynamically assigned 1-to-1
-    - NAT Pool Exhaustion: if all pool IPs are in use, new packets are DROPPED
-    - Entries timeout automatically — or cleared with \`clear ip nat translation *\`
-    - ACL controls which inside hosts get translated (permit = translate, deny = pass-through untranslated)
-  - PAT / NAT Overload: many private IPs → 1 public IP using unique source port numbers
-    - Most common — used in virtually all home and enterprise networks
-    - Port numbers are 16-bit = over 65,000 concurrent sessions per public IP
-- 🔗 OSI Layer: Layer 3 — modifies IP header
-- 📋 Prerequisites: Define inside/outside interfaces. ACL to match traffic. Pool for Dynamic NAT
-- ⚙️ Static NAT
-  - \`ip nat inside source static 192.168.1.10 203.0.113.10\`
-  - On LAN interface: \`ip nat inside\` | On WAN interface: \`ip nat outside\`
-- ⚙️ Dynamic NAT (pool)
-  - \`ip nat pool PUBLIC_POOL 203.0.113.1 203.0.113.10 netmask 255.255.255.0\`
-  - \`access-list 1 permit 192.168.0.0 0.0.255.255\`
-  - \`ip nat inside source list 1 pool PUBLIC_POOL\`
-- ⚙️ PAT (Overload — interface)
-  - \`access-list 1 permit 192.168.0.0 0.0.255.255\`
-  - \`ip nat inside source list 1 interface GigabitEthernet0/1 overload\`
-- ⚙️ PAT (Overload — pool)
-  - \`ip nat pool PAT_POOL 203.0.113.1 203.0.113.5 netmask 255.255.255.0\`
-  - \`ip nat inside source list 1 pool PAT_POOL overload\`
-- 🔍 Verification
-  - \`show ip nat translations\` — active mappings (Pro: inside local/global, outside global, port)
-  - \`show ip nat statistics\` — total translations, misses, inside/outside interfaces
-  - \`clear ip nat translation *\` — clear all dynamic entries
-- 🔧 Troubleshooting
-  - ⚠️ NAT not translating → ACL doesn't match traffic → \`show ip nat statistics\` check misses → fix ACL
-  - ⚠️ Dynamic NAT pool exhaustion → all public IPs in use → \`show ip nat translations\` → add more IPs or convert to PAT
-  - ⚠️ Static NAT not working → inside/outside on wrong interfaces → \`show ip nat statistics\` → swap them
-  - ⚠️ PAT: correct IP but wrong app → port conflict → check \`show ip nat translations\` for port mapping
-
-### DHCP
-- 📖 Auto-assigns IP, mask, gateway, DNS via DORA (UDP 67/68)
-  - Discover → Offer → Request → Acknowledge
-  - \`ip helper-address\` forwards broadcasts to remote server as unicast
-- 🔗 OSI Layer: Layer 7, UDP 67/68
-- ⚙️ Server Config
-  - \`ip dhcp excluded-address 192.168.1.1 192.168.1.10\`
-  - \`ip dhcp pool VLAN10\` → \`network 192.168.1.0 255.255.255.0\` → \`default-router 192.168.1.1\` → \`dns-server 8.8.8.8\` → \`lease 7\`
-- ⚙️ Relay
-  - \`interface GigabitEthernet0/1\` → \`ip helper-address 10.1.1.100\`
-- ⚙️ Client
-  - \`interface GigabitEthernet0/0\` → \`ip address dhcp\`
-- 🔍 Verification
-  - \`show ip dhcp binding\` | \`show ip dhcp pool\`
-- 🔧 Troubleshooting
-  - ⚠️ 169.254.x.x (APIPA) → DHCP unreachable → check \`ip helper-address\`
-  - ⚠️ Pool exhausted → increase pool or reduce lease → \`clear ip dhcp binding *\`
-  - ⚠️ Wrong gateway → \`default-router\` wrong in pool → fix
-
-### DNS
-- 📖 Resolves hostnames to IPs (UDP/TCP 53)
-  - Clients cache responses | Hosts file checked before DNS
-  - Router as client: \`ip name-server\` | as server: \`ip dns server\` + \`ip host\`
-- 🔗 OSI Layer: Layer 7, UDP/TCP 53
-- ⚙️ Commands
-  - Client: \`ip name-server 8.8.8.8 8.8.4.4\` → \`ip domain-name company.local\`
-  - Server: \`ip dns server\` → \`ip host R2 10.0.0.2\`
-- 🔍 Verification
-  - \`show hosts\` | Windows: \`ipconfig /displaydns\` | \`nslookup google.com\`
-- 🔧 Troubleshooting
-  - ⚠️ Resolution failing → DNS server unreachable → \`ping 8.8.8.8\`
-  - ⚠️ IOS CLI hangs → \`ip domain lookup\` with no DNS → \`no ip domain lookup\`
-
-### NTP
-- 📖 Clock synchronization via UDP 123
-  - Stratum 0=atomic/GPS | Stratum 1=connected to stratum 0 | each hop +1
-  - \`ntp update-calendar\` syncs hardware clock from NTP
-- 🔗 OSI Layer: Layer 7, UDP 123
-- ⚙️ Commands
-  - \`clock timezone EST -5\` → \`clock summer-time EDT recurring\`
-  - \`ntp server 216.239.35.0 prefer\` → \`ntp update-calendar\`
-  - Server: \`ntp master 3\`
-- 🔍 Verification
-  - \`show clock detail\` | \`show ntp associations\` | \`show ntp status\`
-- 🔧 Troubleshooting
-  - ⚠️ Not syncing → UDP 123 blocked → \`ping <ntp-server>\` → check ACL
-  - ⚠️ Wrong timestamps → time zone not set → \`clock timezone\`
-
-### SNMP
-- 📖 Monitors and manages devices (UDP 161/162)
-  - Agent (device) listens UDP 161 | NMS listens for traps UDP 162
-  - SNMPv1/v2c: community strings (plaintext) | SNMPv3: auth + encryption — always prefer
-- 🔗 OSI Layer: Layer 7, UDP 161/162
-- ⚙️ SNMPv2c
-  - \`snmp-server community PUBLIC ro\`
-  - \`snmp-server host 10.1.1.100 version 2c PUBLIC\`
-  - \`snmp-server enable traps\`
-- ⚙️ SNMPv3
-  - \`snmp-server group ADMINS v3 priv\`
-  - \`snmp-server user admin ADMINS v3 auth sha AuthP@ss priv aes 128 PrivP@ss\`
-- 🔍 Verification
-  - \`show snmp\` | \`show snmp host\`
-- 🔧 Troubleshooting
-  - ⚠️ NMS not receiving data → community mismatch → \`show snmp community\`
-  - ⚠️ Traps not arriving → \`snmp-server host\` missing
-
-### Syslog
-- 📖 Logs events by severity 0–7
-  - 0=Emergency, 1=Alert, 2=Critical, 3=Error, 4=Warning, 5=Notice, 6=Info, 7=Debug
-  - Mnemonic: Every Awesome Cisco Engineer Will Need Ice cream Daily
-  - Destinations: Console, Buffer, VTY (needs \`terminal monitor\`), External (UDP 514)
-- 🔗 OSI Layer: Layer 7, UDP 514
-- ⚙️ Commands
-  - \`logging 10.1.1.100\` → \`logging trap informational\`
-  - \`logging buffered 16384 debugging\`
-  - \`service timestamps log datetime msec localtime show-timezone\`
-- 🔍 Verification
-  - \`show logging\` | \`terminal monitor\`
-- 🔧 Troubleshooting
-  - ⚠️ Logs not on server → UDP 514 blocked → \`show logging\`
-  - ⚠️ Wrong timestamps → NTP not synced or \`service timestamps\` missing
-
-### SSH
-- 📖 Encrypted CLI access via TCP 22 (replaces Telnet plaintext TCP 23)
-  - SSHv2 preferred. Requires: hostname, domain name, RSA keys, local user or AAA
-  - VTY lines: \`transport input ssh\` only
-- 🔗 OSI Layer: Layer 7, TCP 22
-- ⚙️ Commands
-  - \`hostname R1\` → \`ip domain-name company.local\`
-  - \`crypto key generate rsa modulus 2048\` → \`ip ssh version 2\`
-  - \`username admin privilege 15 secret SecureP@ss1\`
-  - \`line vty 0 15\` → \`transport input ssh\` → \`login local\`
-  - L2 switch: \`interface vlan 1\` → IP → \`no shutdown\` → \`ip default-gateway 192.168.1.1\`
-- 🔍 Verification
-  - \`show ip ssh\` | \`show ssh\`
-- 🔧 Troubleshooting
-  - ⚠️ Connection refused → no RSA keys → \`crypto key generate rsa modulus 2048\`
-  - ⚠️ Connects then drops → \`transport input ssh\` or \`login local\` missing
-  - ⚠️ Can't SSH to switch → no SVI IP or no \`ip default-gateway\`
-
-### QoS
-- 📖 Manages bandwidth, delay, jitter, loss for real-time traffic
-  - VoIP requirements: delay ≤150ms, jitter ≤30ms, loss ≤1%
-  - PCP (3-bit in 802.1Q tag): L2 marking | DSCP (6-bit in IP header): L3 marking
-  - DSCP: EF=46 (VoIP), AF4x (video), AF3x (streaming), AF2x (priority data), DF=0
-  - CBWFQ: bandwidth guarantee per class | LLQ: strict priority for VoIP
-  - Shaping: buffers excess | Policing: drops or re-marks excess
-- 🔗 OSI Layer: L2 (PCP) and L3 (DSCP)
-- ⚙️ MQC Commands
-  - \`class-map match-any VOIP\` → \`match dscp ef\`
-  - \`policy-map WAN\` → \`class VOIP\` → \`priority percent 30\` → \`class class-default\` → \`fair-queue\`
-  - Apply: \`service-policy output WAN\`
-  - IP Phone trust: \`mls qos trust cos\`
-- 🔍 Verification
-  - \`show policy-map interface <int>\` | \`show mls qos interface <int>\`
-- 🔧 Troubleshooting
-  - ⚠️ VoIP choppy → thresholds exceeded → \`show policy-map interface\` → ensure LLQ for EF
-  - ⚠️ DSCP re-marked → trust boundary wrong → \`mls qos trust dscp\`
-
-### FTP and TFTP
-- 📖 File transfer for IOS upgrades and config backups
-  - TFTP: UDP 69, no auth/encryption, built-in ACK/retry
-  - FTP: TCP 20/21, username/password, full directory operations
-  - FTPS = FTP + TLS | SFTP = SSH-based (separate protocol)
-- 🔗 OSI Layer: Layer 7. TFTP=UDP 69, FTP=TCP 20/21
-- ⚙️ Commands
-  - \`show flash\` | \`show version\` — current image
-  - \`copy tftp flash\` | \`copy ftp flash\`
-  - Config backup: \`copy running-config tftp\`
-  - Boot new: \`boot system flash <filename>\` → \`write memory\` → \`reload\`
-- 🔧 Troubleshooting
-  - ⚠️ TFTP fails → server unreachable or wrong filename → \`ping <server>\`
-  - ⚠️ Not enough flash → \`delete flash:<old-image>\` → \`squeeze flash:\`
-
----
-
-## 5. Security Fundamentals
-
-### CIA Triad & Attacks
-- 📖 CIA Triad
-  - Confidentiality: only authorized users access data
-  - Integrity: data unmodified and authentic
-  - Availability: systems accessible to authorized users
-- 📖 Common Attacks
-  - DoS/DDoS: SYN flood exhausts TCP connections | Botnet = distributed DoS
-  - ARP Poisoning: Gratuitous ARP poisons tables → MitM
-  - DHCP Starvation/Poisoning: spoofed MACs exhaust pool or install rogue server
-  - Reflection/Amplification: spoofed source IP → large response floods target
-  - Social Engineering: phishing, vishing, smishing, tailgating, watering hole
-  - Malware: Virus (host required), Worm (self-propagating), Trojan (disguised)
-- ⚙️ Device Hardening
-  - \`service password-encryption\` — Type 7 (weak but better than plaintext)
-  - \`enable secret SecureP@ss123\` — Type 5 MD5 (always use)
-  - Disable unused interfaces: \`shutdown\` + description
-  - \`no cdp enable\` on external-facing ports
-  - VTY ACL: \`access-class <acl> in\` | \`exec-timeout 5 0\`
-
-### ACLs
-- 📖 Ordered packet filter — first match wins, implicit deny any at end
-  - Standard (1–99, 1300–1999): source IP only → place near DESTINATION
-  - Extended (100–199, 2000–2699): src/dst IP, protocol, port → place near SOURCE
-  - Named ACLs: easier editing with sequence numbers
-  - Wildcard mask: 0=must match, 1=ignore
-- 🔗 OSI Layer: L3 (IP) and L4 (port) for extended
-- ⚙️ Standard Named ACL
-  - \`ip access-list standard BLOCK_HOST\` → \`deny host 10.1.1.100\` → \`permit any\`
-  - Apply: \`ip access-group BLOCK_HOST in\`
-- ⚙️ Extended Named ACL
-  - \`ip access-list extended POLICY_OUT\`
-  - \`deny tcp 192.168.10.0 0.0.0.255 host 10.0.1.100 eq 443\`
-  - \`deny icmp 192.168.0.0 0.0.255.255 10.0.0.0 0.0.255.255\`
-  - \`permit ip any any\`
-  - Apply: \`ip access-group POLICY_OUT out\`
-  - Resequence: \`ip access-list resequence POLICY_OUT 10 10\`
-- 🔍 Verification
-  - \`show access-lists\` — hit counters | \`show ip interface <int>\` — applied ACLs
-- 🔧 Troubleshooting
-  - ⚠️ Traffic blocked unexpectedly → wrong rule order → review hit counters → resequence
-  - ⚠️ Broad permit hits before deny → more specific rules must come first
-  - ⚠️ ACL wrong direction → \`show ip interface <int>\` → check in vs out
-
-### IPsec VPN
-- 📖 IPsec: encryption, auth, integrity for IP traffic
-  - Site-to-site: permanent tunnel between two gateway routers
-  - Remote-access: TLS tunnel per user (Cisco AnyConnect)
-  - IPsec = unicast only → GRE over IPsec adds broadcast/multicast (enables OSPF)
-  - DMVPN: dynamic hub-and-spoke with automatic spoke-to-spoke tunnels
-- 🔗 OSI Layer: Layer 3
-- ⚙️ GRE Tunnel Commands
-  - \`interface Tunnel0\` → \`ip address 172.16.0.1 255.255.255.0\`
-  - \`tunnel source GigabitEthernet0/1\` → \`tunnel destination 203.0.113.2\`
-  - OSPF over tunnel: \`ip ospf network point-to-point\` on both ends
-- 🔍 Verification
-  - \`show interfaces Tunnel0\` | \`show crypto isakmp sa\` | \`show crypto ipsec sa\`
-- 🔧 Troubleshooting
-  - ⚠️ Tunnel up but no traffic → IPsec SA not established → check pre-shared key both sides
-  - ⚠️ OSPF not forming → network type mismatch → \`ip ospf network point-to-point\`
-
-### Wireless Security
-- 📖 WPA Certification Levels
-  - WPA1: TKIP — deprecated | WPA2: CCMP/AES — current standard
-  - WPA3: GCMP/AES — adds SAE, PMF, Forward Secrecy
-  - Personal mode: PSK | Enterprise mode: 802.1X with RADIUS
-- 📖 EAP Methods
-  - LEAP: deprecated | EAP-FAST: Cisco, PAC + TLS tunnel
-  - PEAP: TLS tunnel + MS-CHAP, server cert only
-  - EAP-TLS: most secure — certs on BOTH client and server
-- 🔗 OSI Layer: Layer 2 (Data Link)
-- ⚙️ WPA2 PSK (WLC GUI)
-  - WLANs → Create → Security → WPA+WPA2 → AES → PSK → enter passphrase
-- 🔧 Troubleshooting
-  - ⚠️ Client can't connect → PSK mismatch → verify passphrase
-  - ⚠️ WPA3 clients fail → firmware doesn't support WPA3 → upgrade or fall back to WPA2
-
-### AAA
-- 📖 Framework for access control
-  - Authentication: verify identity | Authorization: grant permissions | Accounting: log activity
-  - TACACS+ (Cisco): TCP 49, separates AAA, used for device administration via SSH
-  - RADIUS (open): UDP 1812/1813, combines auth+authz, used for 802.1X/VPN/network access
-  - Cisco ISE = AAA server solution
-- 🔗 OSI Layer: Layer 7 (Application)
-- 📋 Prerequisites: Server reachable. Shared secret matches. ALWAYS configure fallback local auth
-- ⚙️ TACACS+ Commands
-  - \`aaa new-model\`
-  - \`tacacs server ISE\` → \`address ipv4 10.1.1.200\` → \`key TacKey\`
-  - \`aaa authentication login default group tacacs+ local\`
-  - \`aaa authorization exec default group tacacs+ local\`
-  - \`aaa accounting exec default start-stop group tacacs+\`
-- 🔍 Verification
-  - \`show aaa servers\` | \`test aaa group tacacs+ admin password legacy\`
-- 🔧 Troubleshooting
-  - ⚠️ Auth failing → shared secret wrong or unreachable → \`show aaa servers\`
-  - ⚠️ Locked out → use console → \`aaa authentication login console local\`
-
----
-
-## 6. Automation and Programmability
-
-### SDN & Network Planes
-- 📖 Three Logical Planes
-  - Data Plane: forwards user traffic — ASICs + TCAM at wire speed (NOT CPU)
-  - Control Plane: builds routing/MAC/ARP/STP tables — CPU processed
-  - Management Plane: SSH, SNMP, Syslog, NTP — device management
-- 📖 SDN Architecture
-  - Centralizes Control Plane into a software controller
-  - SBI (Southbound): controller → devices (NETCONF, RESTCONF, OpenFlow)
-  - NBI (Northbound): apps/scripts → controller (REST API)
-  - Cisco SD-Access: DNA Center + IS-IS underlay + VXLAN/LISP overlay
-  - Node roles: Edge (end hosts), Border (WAN), Control (LISP)
-- 🔗 OSI Layer: All layers
-- ⚙️ Enable RESTCONF [IOS-XE]
-  - \`ip http secure-server\` → \`restconf\` → \`netconf-yang\`
-- 🔍 Verification
-  - \`show netconf-yang status\` | DNA Center: Design → Provision → Assurance
-- 🔧 Troubleshooting
-  - ⚠️ Device not in DNA Center → check SNMP community + SSH credentials
-  - ⚠️ NETCONF failing → \`netconf-yang\` not enabled
-
-### REST APIs
-- 📖 Representational State Transfer
-  - 6 constraints: stateless, client-server, cacheable, uniform interface, layered, code-on-demand
-  - CRUD → HTTP: Create=POST, Read=GET, Update=PUT/PATCH, Delete=DELETE
-  - Data format: JSON (most common) or XML | Auth: Basic, Bearer Token, OAuth
-- 📖 HTTP Status Codes
-  - 200=OK, 201=Created, 400=Bad Request, 401=Unauthorized, 403=Forbidden, 404=Not Found, 500=Server Error
-- 🔗 OSI Layer: Layer 7, HTTPS TCP 443
-- 🔧 Troubleshooting
-  - ⚠️ 401 Unauthorized → wrong credentials / expired token → re-authenticate
-  - ⚠️ 404 Not Found → wrong URI or API version → check documentation
-
-### JSON, XML, and YAML
-- 📖 JSON (JavaScript Object Notation)
-  - Key-value pairs in \`{}\` objects and \`[]\` arrays
-  - Types: string (quoted), number, boolean, null | Whitespace insignificant
-  - Used by REST APIs
-- 📖 YAML (YAML Ain't Markup Language)
-  - Most human-readable | Indentation significant (spaces only, no tabs)
-  - Starts with \`---\` | Lists use \`-\` | \`key: value\` pairs | Used by Ansible
-- 📖 XML (Extensible Markup Language)
-  - \`<key>value</key>\` format | Less readable | Used by NETCONF
-- 🔧 Troubleshooting
-  - ⚠️ JSON parse error → trailing comma or unquoted string → validate at jsonlint.com
-  - ⚠️ YAML error → tabs instead of spaces → convert all indentation to spaces
-
-### Ansible, Puppet, and Chef
-- 📖 Configuration Management — fight config drift at scale
-- 📖 Ansible (Red Hat)
-  - Agentless, push model, SSH, Python
-  - Files: Playbooks (YAML), Inventory (INI/YAML), Templates (Jinja2), Variables (YAML)
-- 📖 Puppet
-  - Agent-based or agentless proxy, pull model, TCP 8140
-  - Files: Manifests (desired state), Templates
-- 📖 Chef
-  - Agent-based, pull model, TCP 10002, Ruby DSL
-  - Files: Resources → Recipes → Cookbooks → Run-List
-- 📖 Quick Comparison (memorize)
-  - Ansible: agentless + push + SSH
-  - Puppet: agent + pull + TCP 8140
-  - Chef: agent + pull + TCP 10002
-- 🔧 Troubleshooting
-  - ⚠️ Ansible SSH failing → add to known_hosts or disable StrictHostKeyChecking
-  - ⚠️ Config drift → \`ansible-playbook --diff\` to detect delta → push correct state
-
-### Traditional vs Controller-Based
-- 📖 Traditional Networks
-  - Engineers SSH to each device individually — slow and error-prone
-  - Per-device config, no central compliance enforcement
-- 📖 Controller-Based (SDN)
-  - DNA Center centrally manages all devices
-  - Intent-based: describe what you want, controller handles how
-  - Centrally managed: versions, policies, configs, zero-touch provisioning
-- 📖 Key Architecture Concepts
-  - ASIC + TCAM: wire-speed forwarding without CPU
-  - Underlay: physical IS-IS routed network (all L3 links, no STP)
-  - Overlay: virtual VXLAN network on top of underlay
-  - Fabric: underlay + overlay combined
-- 🔧 Troubleshooting
-  - ⚠️ DNA Center shows device unreachable → wrong SNMP community or SSH credentials
-  - ⚠️ Policy not applying → provisioning failed → check DNA Center workflow logs
-`;
-</script>
 </head>
 <body>
-
-<div id="toolbar">
-  <div class="logo">
-    <div class="logo-dot">⬡</div>
-    <span class="logo-name">CCNA Mindmap</span>
-    <span class="logo-pill">200-301</span>
+<header id="toolbar">
+  <div class="brand">
+    <div class="brand-mark">⬡</div>
+    <div class="brand-copy">
+      <div class="brand-title">CCNA Mindmap</div>
+      <div class="brand-subtitle">Structured visual review map</div>
+    </div>
   </div>
-  <div class="sep"></div>
-  <button class="btn" id="btn-fit">
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5"/></svg>
-    Fit
-  </button>
-  <button class="btn sq" id="btn-in" title="Zoom in">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
-  </button>
-  <button class="btn sq" id="btn-out" title="Zoom out">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M5 8h6"/></svg>
-  </button>
-  <div class="sep"></div>
-  <button class="btn" id="btn-expand">
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 4h12M2 8h9M2 12h6"/></svg>
-    Expand
-  </button>
-  <button class="btn" id="btn-collapse">
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 4h12M2 8h5"/></svg>
-    Collapse
-  </button>
-  <div class="spacer"></div>
-  <div class="hints">
-    <kbd>scroll</kbd> zoom &ensp; <kbd>drag</kbd> pan &ensp; <kbd>click</kbd> expand
+  <div class="controls">
+    <button class="theme-switch" id="btn-theme" type="button" aria-label="Toggle color theme">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.25a.75.75 0 0 1 .75.75v.7a.75.75 0 0 1-1.5 0V2A.75.75 0 0 1 8 1.25Zm0 11.55a.75.75 0 0 1 .75.75v.45a.75.75 0 0 1-1.5 0v-.45A.75.75 0 0 1 8 12.8ZM3.58 3.58a.75.75 0 0 1 1.06 0l.5.5a.75.75 0 1 1-1.06 1.06l-.5-.5a.75.75 0 0 1 0-1.06Zm7.28 7.28a.75.75 0 0 1 1.06 0l.5.5a.75.75 0 0 1-1.06 1.06l-.5-.5a.75.75 0 0 1 0-1.06ZM1.25 8A.75.75 0 0 1 2 7.25h.7a.75.75 0 0 1 0 1.5H2A.75.75 0 0 1 1.25 8Zm11.55 0a.75.75 0 0 1 .75-.75H14a.75.75 0 0 1 0 1.5h-.45A.75.75 0 0 1 12.8 8ZM4.08 10.86a.75.75 0 0 1 1.06 1.06l-.5.5a.75.75 0 1 1-1.06-1.06l.5-.5Zm7.84-7.84a.75.75 0 0 1 0 1.06l-.5.5a.75.75 0 0 1-1.06-1.06l.5-.5a.75.75 0 0 1 1.06 0ZM8 4.5A3.5 3.5 0 1 1 8 11.5 3.5 3.5 0 0 1 8 4.5Z"/></svg>
+      <span id="theme-label">Dark mode</span>
+    </button>
   </div>
-  <div class="sep"></div>
-  <button class="btn sq" id="btn-theme" title="Toggle theme">
-    <svg id="i-moon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M12.3 11.7A5.5 5.5 0 0 1 6.5 4.1 6 6 0 1 0 12.3 11.7z"/></svg>
-    <svg id="i-sun" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display:none"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>
-  </button>
-</div>
+</header>
 
-<div id="loader">
-  <div class="spin"></div>
-  <span class="spin-label">Building mindmap…</span>
-</div>
-
-<!-- SVG will be injected here -->
-<div id="map-wrap"></div>
-
-<!-- Off-screen autoloader container — the .markmap class triggers autoloader to load its dependencies -->
 <div class="markmap">
-<script type="text/template" id="md-source">
+<script type="text/template">
+---
+markmap:
+  colorFreezeLevel: 2
+  maxWidth: 480
+  initialExpandLevel: 2
+  duration: 300
+---
+
 # CCNA Mindmap
 
 ## 1. Networking Fundamentals
@@ -970,33 +247,36 @@ const CCNA_MD = `
 ### OSI Model & TCP/IP Suite
 - 📖 7 layers: Physical → Data Link → Network → Transport → Session → Presentation → Application
   - PDUs: Bit (L1), Frame (L2), Packet (L3), Segment (L4), Data (L5-7)
-  - Encapsulation downward · de-encapsulation upward
+  - Encapsulation downward, de-encapsulation upward
   - TCP/IP 4-layer: Network Access, Internet, Transport, Application
 - 🔗 OSI Layer: ALL layers
 - ⚙️ Commands
   - `show ip interface brief` — L3 status
-  - `show interfaces <int>` — L1/L2 counters and errors
-  - `ping <ip>` — ICMP L3 reachability
+  - `show interfaces <int>` — L1/L2 status, counters
+  - `ping <ip>` — L3 reachability (ICMP)
   - `show arp` — L2/L3 ARP table
+- 🔍 Verification
+  - `show ip protocols` — active routing protocols
 - 🔧 Troubleshooting
   - ⚠️ down/down → L1 (cable/SFP) → replace cable
-  - ⚠️ up/down → L2 encapsulation mismatch → check both ends
-  - ⚠️ Ping fails, interface up/up → L3 no route → `show ip route`
+  - ⚠️ up/down → L2 mismatch → check encapsulation both ends
+  - ⚠️ Ping fails, interface up/up → L3, no route → `show ip route`
 
 ### Network Devices
 - 📖 Roles
   - Router: L3, forwards between networks
   - Switch: L2, forwards within LAN
-  - Firewall/NGFW: L3–L7, DPI traffic filtering
+  - Firewall/NGFW: L3–L7, filters traffic with DPI
   - AP: wireless connectivity (L1/L2)
   - WLC / DNA Center: centrally manages APs and SD-Access
-  - PoE Switch: powers phones, APs, cameras over Ethernet
+  - PoE Switch: powers phones, APs, cameras via Ethernet
 - 🔗 OSI Layer: Router=L3, Switch=L2, AP=L1/2, Firewall=L3-7
 - ⚙️ Commands
   - [IOS/IOS-XE] `interface GigabitEthernet0/0` → `ip address 192.168.1.1 255.255.255.0` → `no shutdown`
   - [IOS-XR] `interface GigabitEthernet0/0/0/0` → `ipv4 address 192.168.1.1/24` → `no shutdown`
 - 🔍 Verification
-  - `show ip interface brief` | `show version`
+  - `show ip interface brief` — all interfaces and status
+  - `show version` — platform and IOS version
 - 🔧 Troubleshooting
   - ⚠️ Interface admin down → forgot `no shutdown`
   - ⚠️ Up/up but no traffic → duplex/speed mismatch → `show interfaces` → force settings
@@ -1005,25 +285,27 @@ const CCNA_MD = `
 - 📖 Cable Standards
   - UTP copper: RJ-45, IEEE 802.3, max 100m
   - 10/100BASE-T: 2 pairs | 1000BASE-T/10GBASE-T: 4 pairs bidirectional
-  - Auto MDI-X auto-detects cable type
+  - Auto MDI-X: modern devices auto-detect straight-through vs crossover
   - SMF: laser, up to 80km | MMF: LED, up to 550m, cheaper
 - 🔗 OSI Layer: Layer 1 (Physical)
 - ⚙️ Commands
-  - `speed 1000` + `duplex full` | `description ## to SW1 ##`
+  - `speed 1000` + `duplex full` on interface
+  - `description ## to SW1 ##`
 - 🔍 Verification
-  - `show interfaces <int>` | `show interfaces status` (switch)
+  - `show interfaces <int>` — speed, duplex, CRC/runts/giants
+  - `show interfaces status` (switch)
 - 🔧 Troubleshooting
-  - ⚠️ High CRC errors → bad cable or duplex mismatch → replace or force settings
+  - ⚠️ High CRC errors → bad cable or duplex mismatch → replace cable or force settings
   - ⚠️ Runts (<64B) → duplex mismatch → force `duplex full`
   - ⚠️ Giants (>1518B) → jumbo frames one-sided → align MTU both sides
 
 ### IPv4 Addressing & Subnetting
 - 📖 Key Concepts
   - 32-bit, 4 octets dotted decimal with CIDR prefix
-  - Usable hosts = 2^n − 2 (n = host bits)
-  - Class A /8 (1–126), B /16 (128–191), C /24 (192–223)
+  - Usable hosts = 2^n - 2 (n = host bits)
+  - Class A /8 (1–126), Class B /16 (128–191), Class C /24 (192–223)
   - Private (RFC 1918): 10/8, 172.16/12, 192.168/16
-  - Network = all host bits 0 | Broadcast = all host bits 1
+  - Network address = all host bits 0 | Broadcast = all host bits 1
   - VLSM: variable-length subnets for efficient addressing
 - 🔗 OSI Layer: Layer 3 (Network)
 - ⚙️ Commands
@@ -1032,15 +314,15 @@ const CCNA_MD = `
   - Windows: `ipconfig /all` | Linux: `ip addr show`
 - 🔧 Troubleshooting
   - ⚠️ Can't reach gateway → wrong subnet mask → reconfigure host
-  - ⚠️ 169.254.x.x (APIPA) → DHCP failure → `ipconfig /release` then `/renew`
+  - ⚠️ 169.254.x.x (APIPA) → DHCP failure → `ipconfig /release` + `/renew`
 
 ### IPv6 Addressing
 - 📖 Address Types
-  - 128-bit, 8 groups of 16-bit hex, colon-separated, lowercase
-  - Shorten: remove leading zeros · :: for longest all-zero run (once only)
+  - 128-bit, 8 groups of 16-bit hex, colon-separated
+  - Shorten: remove leading zeros, :: for longest all-zero run (once only), lowercase
   - Global Unicast 2000::/3 (public) | Unique Local FDxx::/48 (private)
   - Link-Local FE80::/10 (auto-generated) | Multicast FF00::/8
-  - EUI-64: insert FFFE into MAC and flip 7th bit
+  - EUI-64: derive Interface ID from MAC (insert FFFE, flip 7th bit)
   - SLAAC: auto-config via NDP Router Advertisements (NDP replaces ARP)
 - 🔗 OSI Layer: Layer 3 (Network)
 - 📋 Prerequisites: `ipv6 unicast-routing` must be enabled globally
@@ -1062,24 +344,24 @@ const CCNA_MD = `
   - Use for: HTTP/S, SSH, FTP, SMTP, BGP
 - 📖 UDP: connectionless, best-effort
   - No handshake, lower overhead, faster
-  - Use for: DNS, DHCP, TFTP, SNMP, NTP, VoIP, Video
+  - Use for: DNS, DHCP, TFTP, SNMP, NTP, VoIP
 - 🔗 OSI Layer: Layer 4 (Transport)
 - ⚙️ Key Port Numbers
   - TCP: FTP 20/21, SSH 22, Telnet 23, HTTP 80, HTTPS 443
   - UDP: DNS 53, DHCP 67/68, TFTP 69, SNMP 161/162, Syslog 514, NTP 123
 - 🔧 Troubleshooting
-  - ⚠️ App unreachable, ping works → port blocked → `show access-lists`
-  - ⚠️ Slow transfer → TCP window / packet loss → `show interfaces`
+  - ⚠️ App unreachable, ping works → port blocked by ACL → `show access-lists`
+  - ⚠️ Slow transfer → TCP window/packet loss → `show interfaces`
 
 ### Wireless Principles
 - 📖 Key Concepts
-  - 2.4 GHz: better range, congested, non-overlapping channels: 1, 6, 11
+  - 2.4 GHz: better range/penetration, congested, non-overlapping channels: 1, 6, 11
   - 5 GHz: more non-overlapping channels, less congestion, shorter range
   - SSID: human-readable network name | CSMA/CA: collision avoidance
   - WPA2 (CCMP/AES) current | WPA3 (GCMP/AES) latest
-- 🔗 OSI Layer: L1 and L2
+- 🔗 OSI Layer: L1 (Physical) and L2 (Data Link)
 - 🔧 Troubleshooting
-  - ⚠️ Poor signal → channel overlap → use analyzer → non-overlapping channel
+  - ⚠️ Poor signal → channel overlap → use analyzer → change to non-overlapping channel
   - ⚠️ Connects but no internet → DHCP not reachable → check VLAN tag on trunk
 
 ### Virtualization Fundamentals
@@ -1087,7 +369,7 @@ const CCNA_MD = `
   - Type 1 Hypervisor (bare-metal): VMware ESXi, Hyper-V — data center
   - Type 2 Hypervisor (hosted): VMware Workstation, VirtualBox — personal
   - Containers (Docker): share host OS kernel, ~ms boot, Kubernetes orchestration
-  - VRF: multiple routing tables on one router — Layer 3 segmentation
+  - VRF: multiple routing tables on one router (Layer 3 segmentation)
 - 🔗 OSI Layer: L3 for VRF; L1/L2 for virtual switches
 - ⚙️ VRF Commands
   - [IOS/IOS-XE] `ip vrf CUST_A` → interface: `ip vrf forwarding CUST_A` → `ip address ...`
@@ -1119,111 +401,117 @@ const CCNA_MD = `
 - 🔧 Troubleshooting
   - ⚠️ Host can't reach same-VLAN host → port not in correct VLAN → reassign
   - ⚠️ VLAN not crossing trunk → not in allowed list → `switchport trunk allowed vlan add <id>`
-  - ⚠️ Native VLAN mismatch → `switchport trunk native vlan <id>` on BOTH sides
+  - ⚠️ Native VLAN mismatch warning → `switchport trunk native vlan <id>` on BOTH sides
 
 ### Trunking (802.1Q)
 - 📖 Carries multiple VLANs over a single link
-  - 802.1Q tag (4 bytes): 12-bit VID, 3-bit PCP (QoS), 1-bit DEI
+  - 802.1Q tag (4 bytes): 12-bit VLAN ID, 3-bit PCP (QoS), 1-bit DEI
   - Native VLAN sent untagged — must match both ends
   - ISL: Cisco proprietary, obsolete — use 802.1Q only
-  - DTP auto-negotiates trunks — disable on production ports
+  - DTP: auto-negotiates trunks — disable on production (`switchport nonegotiate`)
 - 🔗 OSI Layer: Layer 2 (Data Link)
+- 📋 Prerequisites: VLANs exist both sides. Native VLAN must match. Disable DTP
 - ⚙️ Commands
   - `switchport trunk encapsulation dot1q` → `switchport mode trunk`
   - `switchport trunk native vlan 99` → `switchport nonegotiate`
 - 🔍 Verification
   - `show interfaces trunk` | `show interfaces <int> switchport`
 - 🔧 Troubleshooting
-  - ⚠️ Native VLAN mismatch in logs → align on BOTH sides
+  - ⚠️ Native VLAN mismatch → align on BOTH sides
   - ⚠️ VLAN not active on trunk → VLAN not created locally → `vlan <id>`
   - ⚠️ Trunk not forming → force both sides `switchport mode trunk`
 
 ### Spanning Tree Protocol
 - 📖 Prevents L2 loops by blocking redundant ports
-  - Root Bridge: lowest Bridge ID (priority + MAC)
+  - Root Bridge: lowest Bridge ID (priority + MAC) — all ports Designated/Forwarding
   - Root Port: best path to Root Bridge | Designated: best port per segment
   - STP states: Blocking → Listening (15s) → Learning (15s) → Forwarding
   - RSTP (802.1w): ~1–2s convergence via handshake
-  - Port cost: 10Gbps=2, 1Gbps=4, 100Mbps=19, 10Mbps=100
+  - RSTP roles: Alternate (backup Root Port), Backup (backup Designated Port)
+  - STP port cost: 10Gbps=2, 1Gbps=4, 100Mbps=19, 10Mbps=100
 - 🔗 OSI Layer: Layer 2 (Data Link)
-- 📋 Prerequisites: PortFast ONLY on end-host ports. BPDU Guard on all access ports
+- 📋 Prerequisites: Same STP variant across switches. PortFast ONLY on end-host ports. BPDU Guard on all access ports
 - ⚙️ Commands
-  - `spanning-tree vlan 10 root primary` (priority 24576)
-  - `spanning-tree vlan 10 root secondary` (priority 28672)
-  - PortFast per-port: `spanning-tree portfast`
-  - BPDU Guard: `spanning-tree bpduguard enable`
-  - `spanning-tree mode rapid-pvst`
+  - `spanning-tree vlan 10 root primary` (priority=24576)
+  - `spanning-tree vlan 10 root secondary` (priority=28672)
+  - PortFast: `spanning-tree portfast` (per-port) or `spanning-tree portfast default`
+  - BPDU Guard: `spanning-tree bpduguard enable` (per-port) or `spanning-tree portfast bpduguard default`
+  - Mode: `spanning-tree mode rapid-pvst`
 - 🔍 Verification
-  - `show spanning-tree` | `show spanning-tree vlan 10`
+  - `show spanning-tree` | `show spanning-tree vlan 10` | `show spanning-tree summary`
 - 🔧 Troubleshooting
-  - ⚠️ Broadcast storm → L2 loop → disable offending port immediately
+  - ⚠️ Broadcast storm → L2 loop → `show spanning-tree` → disable offending port immediately
   - ⚠️ Port stuck in BLK → wrong Root Bridge → manually configure correct root
-  - ⚠️ PortFast port err-disabled → switch plugged into access port → unplug → shutdown/no shutdown
+  - ⚠️ PortFast port err-disabled → switch plugged in (BPDU received) → unplug → shutdown/no shutdown
 
 ### EtherChannel (LACP)
-- 📖 Bundles multiple links into one logical interface
+- 📖 Bundles multiple physical links into one logical interface
   - STP sees as single link — no ports blocked
   - LACP (IEEE 802.3ad): active initiates, passive waits
   - PAgP (Cisco): desirable initiates, auto waits
-  - Static `on`: both sides must be `on`, no negotiation
-  - All members must match: speed, duplex, VLAN config
+  - Static `on` mode: both sides must be `on`
+  - All member ports must match: speed, duplex, VLAN config
 - 🔗 OSI Layer: L2 (and L3 for Layer 3 EtherChannel)
+- 📋 Prerequisites: Identical config on all members. Mismatch = port suspended (s flag)
 - ⚙️ Commands
   - `interface range GigabitEthernet0/0 - 3` → `channel-group 1 mode active`
   - `interface port-channel 1` → configure trunk/access/IP
   - [IOS-XR] `interface Bundle-Ether1` → member: `bundle id 1 mode active`
 - 🔍 Verification
-  - `show etherchannel summary` — P=bundled, s=suspended, D=down
+  - `show etherchannel summary` — SU=L2 in-use, P=bundled, s=suspended, D=down
   - `show lacp neighbor`
 - 🔧 Troubleshooting
-  - ⚠️ Port shows `s` → config mismatch → `show etherchannel detail` → align config
+  - ⚠️ Port shows `s` (suspended) → config mismatch → `show etherchannel detail` → align
   - ⚠️ Channel not forming → both sides passive → one must be `active`
   - ⚠️ Uneven traffic → `port-channel load-balance src-dst-ip`
 
 ### CDP and LLDP
-- 📖 Layer 2 neighbor discovery
-  - CDP: Cisco proprietary, ON by default, 60s/180s timer
-  - LLDP: IEEE 802.1AB, OFF by default, 30s/120s timer, 2s reinit delay
-  - Reveals hostname, IP, device type, IOS version — disable on external ports
+- 📖 Layer 2 neighbor discovery protocols
+  - CDP: Cisco proprietary, ON by default, 60s timer, 180s hold-time
+  - LLDP: IEEE 802.1AB, OFF by default on Cisco, 30s timer, 120s hold-time, 2s reinit delay
+  - Both reveal: hostname, IP, device type, IOS version, connected port — disable on external ports
 - 🔗 OSI Layer: Layer 2 (Data Link)
 - ⚙️ Commands
   - CDP: `no cdp run` (global) | `no cdp enable` (per-interface)
-  - LLDP: `lldp run` global | `lldp transmit` AND `lldp receive` per-interface
+  - LLDP: `lldp run` (global) | `lldp transmit` AND `lldp receive` (per-interface, both required)
+  - [IOS-XR] global `lldp` → interface: `lldp enable`
 - 🔍 Verification
   - `show cdp neighbors detail` | `show lldp neighbors detail`
 - 🔧 Troubleshooting
   - ⚠️ CDP neighbor missing → CDP disabled one side → `show cdp interface`
-  - ⚠️ LLDP neighbor missing → tx/rx not both enabled → `lldp transmit` + `lldp receive`
+  - ⚠️ LLDP neighbor missing → tx/rx not both enabled → add `lldp transmit` + `lldp receive`
 
 ### Wireless Architectures
 - 📖 AP Deployment Models
   - Autonomous AP: self-contained, individual config, small networks only
   - Lightweight AP (CAPWAP split-MAC)
-    - AP handles: RF, encryption, beacons, packet prioritization
-    - WLC handles: auth, QoS, roaming, channel/power assignment
-    - CAPWAP: UDP 5246 control (encrypted), UDP 5247 data
+    - AP handles: RF, encryption, beacons, packet prioritization (real-time)
+    - WLC handles: auth, QoS, roaming, channel assignment (non-real-time)
+    - CAPWAP tunnels: UDP 5246 control (encrypted), UDP 5247 data
     - AP connects to switch ACCESS port (not trunk)
-  - Cloud-based (Cisco Meraki): cloud management, local data forwarding
+  - Cloud-based AP (Cisco Meraki): cloud management, local data forwarding
 - 📖 WLC Deployment Modes
-  - Unified HW appliance: up to 6000 APs | Cloud VM: up to 3000 APs
-  - Embedded in switch: up to 200 APs | Mobility Express in AP: up to 100 APs
+  - Unified HW appliance: up to 6000 APs
+  - Cloud-based VM: up to 3000 APs | Embedded in switch: up to 200 APs
+  - Mobility Express (in AP): up to 100 APs
 - 🔗 OSI Layer: L1/L2 wireless, L3 CAPWAP tunnels
+- 📋 Prerequisites: WLC reachable via DHCP Option 43 or DNS. X.509 certs on AP and WLC
 - 🔧 Troubleshooting
-  - ⚠️ AP not joining WLC → CAPWAP failing → check DHCP Option 43 → `debug capwap client errors`
+  - ⚠️ AP not joining WLC → CAPWAP failing → check Option 43 → `debug capwap client errors`
   - ⚠️ No IP for clients → DHCP not reaching WLC dynamic interface → check VLAN mapping
 
 ### Port Security
 - 📖 Restricts which MACs can send on a switchport
-  - Default: 1 MAC, violation = shutdown (err-disable)
-  - Shutdown: err-disable + syslog | Restrict: drop + log + count | Protect: drop silently
-  - Sticky: saves dynamically learned MACs to running-config permanently
+  - Default: 1 MAC, violation mode = shutdown (err-disable)
+  - Violation modes: Shutdown (err-disable + log), Restrict (drop + log + count), Protect (drop silently)
+  - Sticky: saves dynamically learned MACs permanently to running-config
 - 🔗 OSI Layer: Layer 2 (Data Link)
 - ⚙️ Commands
   - `switchport mode access` → `switchport port-security`
   - `switchport port-security maximum 2`
   - `switchport port-security mac-address sticky`
   - `switchport port-security violation restrict`
-  - Auto-recover: `errdisable recovery cause psecure-violation`
+  - Auto-recover: `errdisable recovery cause psecure-violation` → `errdisable recovery interval 300`
 - 🔍 Verification
   - `show port-security interface <int>` | `show port-security address`
 - 🔧 Troubleshooting
@@ -1233,55 +521,57 @@ const CCNA_MD = `
 ### DHCP Snooping
 - 📖 Filters DHCP messages on untrusted switch ports
   - All ports untrusted by default — mark uplinks as trusted
-  - Drops DHCP Server msgs on untrusted ports (OFFER/ACK/NAK)
-  - Validates Client CHADDR field vs source MAC
+  - Untrusted: drops DHCP Server msgs (OFFER/ACK/NAK), validates Client CHADDR vs src MAC
   - Builds DHCP Snooping Binding Table (required by DAI)
+  - Option 82 added by default — can cause issues in multi-switch deployments
 - 🔗 OSI Layer: Layer 2 (Data Link)
+- 📋 Prerequisites: Enable globally + per-VLAN. Mark uplinks trusted. Enable before DAI
 - ⚙️ Commands
   - `ip dhcp snooping` → `ip dhcp snooping vlan 10,20`
   - Uplink: `ip dhcp snooping trust`
   - Rate-limit: `ip dhcp snooping limit rate 15`
   - Disable Option 82: `no ip dhcp snooping information option`
 - 🔍 Verification
-  - `show ip dhcp snooping` | `show ip dhcp snooping binding`
+  - `show ip dhcp snooping` | `show ip dhcp snooping binding` | `show ip dhcp snooping statistics`
 - 🔧 Troubleshooting
   - ⚠️ Clients not getting DHCP → uplink not trusted → `ip dhcp snooping trust`
-  - ⚠️ "inconsistent relay info" → Option 82 mismatch → `no ip dhcp snooping information option`
+  - ⚠️ "inconsistent relay info" drops → Option 82 mismatch → `no ip dhcp snooping information option`
 
 ### Dynamic ARP Inspection (DAI)
 - 📖 Validates ARP packets vs DHCP Snooping binding table on untrusted ports
   - Sender MAC ≠ binding entry → ARP dropped — prevents ARP poisoning (MitM)
   - Trusted ports forward all ARP normally
-  - ARP ACLs needed for hosts with static IPs
+  - ARP ACLs for static-IP hosts not in binding table
 - 🔗 OSI Layer: Layer 2 (Data Link)
-- 📋 Prerequisites: DHCP Snooping enabled and binding table populated first
+- 📋 Prerequisites: DHCP Snooping enabled and binding table populated
 - ⚙️ Commands
   - `ip arp inspection vlan 10,20`
   - Uplink: `ip arp inspection trust`
-  - `ip arp inspection limit rate 100`
-  - Optional: `ip arp inspection validate src-mac dst-mac ip`
+  - Rate-limit: `ip arp inspection limit rate 100`
+  - Validate: `ip arp inspection validate src-mac dst-mac ip`
+  - ARP ACL: `arp access-list STATIC` → `permit ip host 10.1.1.10 mac host aabb.cc00.1234` → apply with `ip arp inspection filter STATIC vlan 10`
 - 🔍 Verification
   - `show ip arp inspection` | `show ip arp inspection interfaces`
 - 🔧 Troubleshooting
-  - ⚠️ Legit ARP dropped → static IP not in snooping table → create ARP ACL
-  - ⚠️ Port err-disabled → `errdisable recovery cause arp-inspection`
+  - ⚠️ Legit ARP dropped → static IP host not in snooping table → create ARP ACL
+  - ⚠️ Port err-disabled from ARP rate → adjust rate or `errdisable recovery cause arp-inspection`
 
 ---
 
 ## 3. IP Connectivity
 
 ### Routing Table & Forwarding
-- 📖 Forwarding decision order
+- 📖 Router forwarding decision order
   - Longest prefix match wins (most specific route)
   - Tie → lowest Administrative Distance (AD)
-  - Tie → lowest metric
+  - Tie → lowest metric (cost/hop count/bandwidth)
   - Default route: 0.0.0.0/0 = Gateway of Last Resort
-  - Codes: C=Connected, L=Local, S=Static, O=OSPF, D=EIGRP, R=RIP
-- 📖 AD Values (memorize)
+  - Route codes: C=Connected, L=Local, S=Static, O=OSPF, D=EIGRP, R=RIP
+- 📖 Administrative Distance (memorize)
   - Connected=0, Static=1, EIGRP Int=90, OSPF=110, RIP=120, EIGRP Ext=170, Unusable=255
 - 🔗 OSI Layer: Layer 3 (Network)
 - 🔍 Verification
-  - `show ip route` | `show ip route 10.1.1.0` | `show ip protocols`
+  - `show ip route` | `show ip route 10.1.1.0` | `show ip route summary` | `show ip protocols`
 - 🔧 Troubleshooting
   - ⚠️ Wrong path → less-specific route winning → add more-specific route
   - ⚠️ "Destination unreachable" → no route → `show ip route` → add route
@@ -1289,9 +579,11 @@ const CCNA_MD = `
 
 ### Static Routing
 - 📖 Manually configured routes — no auto-adaptation to failures
-  - Network, Host (/32), Default (0.0.0.0/0), Floating static (backup via higher AD)
-  - On Ethernet: always specify next-hop IP (not just exit interface)
+  - Types: Network, Host (/32), Default (0.0.0.0/0), Floating static (backup with higher AD)
+  - Recursive: next-hop IP only | Directly-attached: exit interface | Fully-specified: both
+  - On Ethernet interfaces: always use next-hop IP (not just exit interface)
 - 🔗 OSI Layer: Layer 3 (Network)
+- 📋 Prerequisites: Exit interface up. Next-hop IP reachable
 - ⚙️ Commands
   - Network: `ip route 10.1.0.0 255.255.0.0 192.168.1.2`
   - Default: `ip route 0.0.0.0 0.0.0.0 203.0.113.1`
@@ -1301,22 +593,22 @@ const CCNA_MD = `
 - 🔍 Verification
   - `show ip route static` | `show ip route 10.1.0.0`
 - 🔧 Troubleshooting
-  - ⚠️ Static route missing → next-hop unreachable → verify next-hop reachability
-  - ⚠️ Floating static not activating → AD too low → must exceed primary protocol AD
+  - ⚠️ Static route missing → next-hop unreachable → verify next-hop
+  - ⚠️ Floating static not activating → AD too low → must be higher than primary protocol AD
 
 ### OSPF (OSPFv2)
 - 📖 Link-State IGP using Dijkstra's SPF algorithm
-  - All areas connect to Area 0 (backbone) | ABR = router in multiple areas (max 2)
-  - Cost = reference BW / interface BW (default ref = 100 Mbps — too low for Gigabit)
+  - All areas must connect to Area 0 (backbone) | ABR = router in multiple areas (max 2)
+  - Cost = reference BW / interface BW (default ref = 100 Mbps — increase for modern networks)
   - Router ID: manual > highest loopback > highest physical IP
-  - DR/BDR election: highest priority (default=1) then highest RID
+  - DR/BDR election on broadcast: highest priority (default=1) → highest RID
   - Timers: Hello=10s, Dead=40s (Ethernet)
 - 📖 Neighbor states: Down → Init → 2-Way → ExStart → Exchange → Loading → Full
-- 🔗 OSI Layer: L3, IP protocol 89, multicast 224.0.0.5/224.0.0.6
-- 📋 Prerequisites: Area#, Hello/Dead timers, subnet, MTU, network type, unique RIDs must match
+- 🔗 OSI Layer: L3, IP protocol 89, multicast 224.0.0.5 / 224.0.0.6
+- 📋 Prerequisites: Area#, Hello/Dead timers, subnet, MTU, network type, unique RIDs must all match
 - ⚙️ Commands [IOS/IOS-XE]
   - `router ospf 1` → `router-id 1.1.1.1`
-  - `auto-cost reference-bandwidth 10000` (set on ALL routers)
+  - `auto-cost reference-bandwidth 10000` (10 Gbps reference — set on ALL routers)
   - `network 10.0.0.0 0.0.0.255 area 0`
   - `passive-interface GigabitEthernet0/1`
   - Per-interface: `ip ospf 1 area 0`
@@ -1324,22 +616,23 @@ const CCNA_MD = `
 - ⚙️ Commands [IOS-XR]
   - `router ospf 1` → `router-id 1.1.1.1` → `area 0` → `interface GigabitEthernet0/0/0/0`
 - 🔍 Verification
-  - `show ip ospf neighbor` — must reach FULL
-  - `show ip ospf interface brief` | `show ip ospf database` | `show ip route ospf`
+  - `show ip ospf neighbor` — must reach FULL state
+  - `show ip ospf interface brief` — area, cost, DR/BDR
+  - `show ip ospf database` | `show ip route ospf`
 - 🔧 Troubleshooting
-  - ⚠️ Stuck in INIT → ACL blocking 224.0.0.5 → `debug ip ospf hello`
+  - ⚠️ Stuck in INIT → ACL blocking 224.0.0.5 → `debug ip ospf hello` → remove ACL block
   - ⚠️ Stuck in EXSTART/EXCHANGE → MTU mismatch → `ip ospf mtu-ignore` or align MTU
   - ⚠️ Neighbors up, routes missing → network type mismatch → `ip ospf network <type>`
-  - ⚠️ Wrong cost → `auto-cost reference-bandwidth` not updated on ALL routers
+  - ⚠️ Wrong cost → `auto-cost reference-bandwidth` not updated → set on ALL routers
 
 ### EIGRP
 - 📖 Advanced distance-vector IGP — Cisco, now open standard
   - DUAL algorithm | Metric = bandwidth (slowest) + delay (all links)
-  - FD = Feasible Distance | RD = Reported Distance (neighbor's metric)
-  - Successor = best route | Feasible Successor = backup where RD < Successor FD
+  - FD = Feasible Distance (this router's metric) | RD = Reported Distance (neighbor's metric)
+  - Successor = best route | Feasible Successor = backup route where RD < Successor FD
   - Unequal-cost LB via `variance` | Multicast 224.0.0.10 | AD: Internal=90, External=170
 - 🔗 OSI Layer: L3, IP protocol 88
-- 📋 Prerequisites: AS number must match on all routers. `no auto-summary` recommended
+- 📋 Prerequisites: AS number must match. `no auto-summary` recommended. Loopback for stable RID
 - ⚙️ Commands [IOS/IOS-XE]
   - `router eigrp 100` → `no auto-summary` → `eigrp router-id 1.1.1.1`
   - `network 10.0.0.0 0.0.255.255` → `passive-interface GigabitEthernet0/1`
@@ -1347,12 +640,12 @@ const CCNA_MD = `
 - 🔍 Verification
   - `show ip eigrp neighbors` | `show ip eigrp topology` | `show ip route eigrp`
 - 🔧 Troubleshooting
-  - ⚠️ Neighbor not forming → AS number mismatch → verify both sides
-  - ⚠️ Neighbor up, routes missing → `auto-summary` wrong → `no auto-summary`
-  - ⚠️ Stuck in Active (SIA) → query timeout → add route summarization
+  - ⚠️ Neighbor not forming → AS number mismatch → verify both sides match
+  - ⚠️ Neighbor up, routes missing → `auto-summary` summarizing wrong → `no auto-summary`
+  - ⚠️ Stuck in Active (SIA) → query timeout → summarize routes to limit query scope
 
 ### Inter-VLAN Routing
-- 📖 Two main options
+- 📖 Layer 2 switches cannot route between VLANs — two main options
   - Router on a Stick (ROAS): one router interface + dot1q sub-interfaces per VLAN
   - Multilayer Switch SVIs: virtual L3 interfaces per VLAN, requires `ip routing`
 - 🔗 OSI Layer: Layer 3 (Network)
@@ -1364,32 +657,34 @@ const CCNA_MD = `
 - ⚙️ SVI (Multilayer Switch)
   - `ip routing`
   - `interface vlan 10` → `ip address 192.168.10.1 255.255.255.0` → `no shutdown`
-  - Routed uplink: `no switchport` → `ip address ...`
+  - Routed uplink: `interface GigabitEthernet0/0` → `no switchport` → `ip address ...`
 - 🔍 Verification
   - `show ip route` | `show interface vlan 10`
 - 🔧 Troubleshooting
   - ⚠️ ROAS not routing → VLAN tag mismatch → `encapsulation dot1q` must match VLAN ID
-  - ⚠️ SVI down/down → VLAN missing or no active port → `show vlan brief`
+  - ⚠️ SVI down/down → VLAN missing or no active port → `show vlan brief` → create VLAN + active port
   - ⚠️ VLANs can't reach each other → `ip routing` missing on multilayer switch
 
 ### FHRP (HSRP / VRRP / GLBP)
 - 📖 First Hop Redundancy — gateway failover
-  - Shared VIP — hosts use as default gateway
-  - Active/Master responds with virtual MAC
+  - Shared Virtual IP (VIP) — hosts use as default gateway
+  - Active/Master responds to ARP with virtual MAC
   - Non-preemptive by default — configure `preempt` to auto-restore
-  - Gratuitous ARP updates switches on failover
-- 📖 Protocols
-  - HSRP: Cisco, active/standby, v2 multicast 224.0.0.102
+  - Gratuitous ARP updates switches after failover
+- 📖 Protocol Comparison
+  - HSRP: Cisco proprietary, active/standby, v1=224.0.0.2, v2=224.0.0.102
   - VRRP: Open standard, master/backup, 224.0.0.18
   - GLBP: Cisco, load-balances across Active Virtual Forwarders, 224.0.0.102
 - 🔗 OSI Layer: Layer 3 (Network)
+- 📋 Prerequisites: Both routers same subnet. VIP in subnet. HSRP version match. Group numbers match
 - ⚙️ HSRP
   - `standby version 2` → `standby 1 ip 192.168.1.254`
   - `standby 1 priority 110` → `standby 1 preempt`
+  - [IOS-XR] `router hsrp` → interface → `hsrp 1 address 192.168.1.254`
 - 🔍 Verification
   - `show standby` | `show standby brief`
 - 🔧 Troubleshooting
-  - ⚠️ Both routers Active → hellos not reaching each other → check multicast path
+  - ⚠️ Both routers Active → hellos not reaching each other → check HSRP multicast path
   - ⚠️ Traffic still going to failed router → stale ARP → `clear arp-cache` on switch
 
 ---
@@ -1397,44 +692,30 @@ const CCNA_MD = `
 ## 4. IP Services
 
 ### NAT
-- 📖 Three NAT Types
-  - Static NAT: 1-to-1 permanent mapping — also allows inbound connections to inside hosts
-  - Dynamic NAT: pool of public IPs dynamically assigned 1-to-1
-    - NAT Pool Exhaustion: if all pool IPs are in use, new packets are DROPPED
-    - Entries timeout automatically — or cleared with `clear ip nat translation *`
-    - ACL controls which inside hosts get translated (permit = translate, deny = pass-through untranslated)
-  - PAT / NAT Overload: many private IPs → 1 public IP using unique source port numbers
-    - Most common — used in virtually all home and enterprise networks
-    - Port numbers are 16-bit = over 65,000 concurrent sessions per public IP
+- 📖 Modifies source/destination IPs — enables private hosts to reach internet
+  - Static NAT: 1-to-1 permanent mapping
+  - Dynamic NAT: pool of public IPs, 1-to-1, can exhaust pool
+  - PAT/Overload: many private → 1 public IP using unique ports — most common
+  - Inside Local = private IP | Inside Global = public IP used externally
 - 🔗 OSI Layer: Layer 3 — modifies IP header
-- 📋 Prerequisites: Define inside/outside interfaces. ACL to match traffic. Pool for Dynamic NAT
+- 📋 Prerequisites: Define inside/outside interfaces. ACL for traffic. Pool for dynamic NAT
 - ⚙️ Static NAT
   - `ip nat inside source static 192.168.1.10 203.0.113.10`
-  - On LAN interface: `ip nat inside` | On WAN interface: `ip nat outside`
-- ⚙️ Dynamic NAT (pool)
-  - `ip nat pool PUBLIC_POOL 203.0.113.1 203.0.113.10 netmask 255.255.255.0`
-  - `access-list 1 permit 192.168.0.0 0.0.255.255`
-  - `ip nat inside source list 1 pool PUBLIC_POOL`
-- ⚙️ PAT (Overload — interface)
+  - On interfaces: `ip nat inside` (LAN) and `ip nat outside` (WAN)
+- ⚙️ PAT (Overload)
   - `access-list 1 permit 192.168.0.0 0.0.255.255`
   - `ip nat inside source list 1 interface GigabitEthernet0/1 overload`
-- ⚙️ PAT (Overload — pool)
-  - `ip nat pool PAT_POOL 203.0.113.1 203.0.113.5 netmask 255.255.255.0`
-  - `ip nat inside source list 1 pool PAT_POOL overload`
 - 🔍 Verification
-  - `show ip nat translations` — active mappings (Pro: inside local/global, outside global, port)
-  - `show ip nat statistics` — total translations, misses, inside/outside interfaces
-  - `clear ip nat translation *` — clear all dynamic entries
+  - `show ip nat translations` | `show ip nat statistics` | `clear ip nat translation *`
 - 🔧 Troubleshooting
-  - ⚠️ NAT not translating → ACL doesn't match traffic → `show ip nat statistics` check misses → fix ACL
-  - ⚠️ Dynamic NAT pool exhaustion → all public IPs in use → `show ip nat translations` → add more IPs or convert to PAT
-  - ⚠️ Static NAT not working → inside/outside on wrong interfaces → `show ip nat statistics` → swap them
-  - ⚠️ PAT: correct IP but wrong app → port conflict → check `show ip nat translations` for port mapping
+  - ⚠️ NAT not translating → ACL mismatch or inside/outside not set → `show ip nat statistics` (check misses)
+  - ⚠️ Pool exhaustion → add more IPs or switch to PAT
+  - ⚠️ Static NAT not working → verify inside/outside on correct interfaces
 
 ### DHCP
-- 📖 Auto-assigns IP, mask, gateway, DNS via DORA (UDP 67/68)
-  - Discover → Offer → Request → Acknowledge
-  - `ip helper-address` forwards broadcasts to remote server as unicast
+- 📖 Automatically assigns IP, mask, gateway, DNS via DORA
+  - Discover → Offer → Request → Acknowledge (UDP 67/68)
+  - `ip helper-address` forwards DHCP broadcasts to remote server as unicast
 - 🔗 OSI Layer: Layer 7, UDP 67/68
 - ⚙️ Server Config
   - `ip dhcp excluded-address 192.168.1.1 192.168.1.10`
@@ -1444,35 +725,37 @@ const CCNA_MD = `
 - ⚙️ Client
   - `interface GigabitEthernet0/0` → `ip address dhcp`
 - 🔍 Verification
-  - `show ip dhcp binding` | `show ip dhcp pool`
+  - `show ip dhcp binding` | `show ip dhcp pool` | Windows: `ipconfig /release` + `/renew`
 - 🔧 Troubleshooting
-  - ⚠️ 169.254.x.x (APIPA) → DHCP unreachable → check `ip helper-address`
+  - ⚠️ 169.254.x.x (APIPA) → DHCP unreachable → check `ip helper-address` → `debug ip dhcp server events`
   - ⚠️ Pool exhausted → increase pool or reduce lease → `clear ip dhcp binding *`
-  - ⚠️ Wrong gateway → `default-router` wrong in pool → fix
+  - ⚠️ Wrong gateway → `default-router` wrong in pool → fix it
 
 ### DNS
 - 📖 Resolves hostnames to IPs (UDP/TCP 53)
   - Clients cache responses | Hosts file checked before DNS
-  - Router as client: `ip name-server` | as server: `ip dns server` + `ip host`
+  - Router as DNS client: `ip name-server` | as simple server: `ip dns server` + `ip host`
 - 🔗 OSI Layer: Layer 7, UDP/TCP 53
 - ⚙️ Commands
   - Client: `ip name-server 8.8.8.8 8.8.4.4` → `ip domain-name company.local`
   - Server: `ip dns server` → `ip host R2 10.0.0.2`
 - 🔍 Verification
-  - `show hosts` | Windows: `ipconfig /displaydns` | `nslookup google.com`
+  - `show hosts` | Windows: `ipconfig /displaydns` `ipconfig /flushdns` `nslookup google.com`
 - 🔧 Troubleshooting
-  - ⚠️ Resolution failing → DNS server unreachable → `ping 8.8.8.8`
+  - ⚠️ Name resolution failing → DNS server unreachable → `ping 8.8.8.8`
   - ⚠️ IOS CLI hangs → `ip domain lookup` with no DNS → `no ip domain lookup`
 
 ### NTP
 - 📖 Clock synchronization via UDP 123
   - Stratum 0=atomic/GPS | Stratum 1=connected to stratum 0 | each hop +1
   - `ntp update-calendar` syncs hardware clock from NTP
+  - Auth optional but recommended
 - 🔗 OSI Layer: Layer 7, UDP 123
 - ⚙️ Commands
   - `clock timezone EST -5` → `clock summer-time EDT recurring`
   - `ntp server 216.239.35.0 prefer` → `ntp update-calendar`
   - Server: `ntp master 3`
+  - Auth: `ntp authenticate` → `ntp authentication-key 1 md5 Key1` → `ntp trusted-key 1`
 - 🔍 Verification
   - `show clock detail` | `show ntp associations` | `show ntp status`
 - 🔧 Troubleshooting
@@ -1480,9 +763,11 @@ const CCNA_MD = `
   - ⚠️ Wrong timestamps → time zone not set → `clock timezone`
 
 ### SNMP
-- 📖 Monitors and manages devices (UDP 161/162)
+- 📖 Monitors and manages network devices
   - Agent (device) listens UDP 161 | NMS listens for traps UDP 162
-  - SNMPv1/v2c: community strings (plaintext) | SNMPv3: auth + encryption — always prefer
+  - MIB: variables stored as Object IDs (OIDs)
+  - SNMPv1/v2c: community strings (plaintext) — avoid if possible
+  - SNMPv3: auth (MD5/SHA) + encryption (AES) — always prefer
 - 🔗 OSI Layer: Layer 7, UDP 161/162
 - ⚙️ SNMPv2c
   - `snmp-server community PUBLIC ro`
@@ -1501,41 +786,46 @@ const CCNA_MD = `
 - 📖 Logs events by severity 0–7
   - 0=Emergency, 1=Alert, 2=Critical, 3=Error, 4=Warning, 5=Notice, 6=Info, 7=Debug
   - Mnemonic: Every Awesome Cisco Engineer Will Need Ice cream Daily
-  - Destinations: Console, Buffer, VTY (needs `terminal monitor`), External (UDP 514)
+  - Destinations: Console, Buffer (RAM), VTY (`terminal monitor`), External (UDP 514)
+  - Format: seq: timestamp: %facility-severity-MNEMONIC: description
 - 🔗 OSI Layer: Layer 7, UDP 514
 - ⚙️ Commands
   - `logging 10.1.1.100` → `logging trap informational`
   - `logging buffered 16384 debugging`
   - `service timestamps log datetime msec localtime show-timezone`
+  - `logging synchronous` on console/VTY lines
 - 🔍 Verification
-  - `show logging` | `terminal monitor`
+  - `show logging` | `terminal monitor` (for SSH sessions)
 - 🔧 Troubleshooting
-  - ⚠️ Logs not on server → UDP 514 blocked → `show logging`
+  - ⚠️ Logs not on server → UDP 514 blocked or not configured → `show logging`
   - ⚠️ Wrong timestamps → NTP not synced or `service timestamps` missing
 
 ### SSH
-- 📖 Encrypted CLI access via TCP 22 (replaces Telnet plaintext TCP 23)
+- 📖 Encrypted CLI access (replaces Telnet plaintext TCP 23), listens TCP 22
   - SSHv2 preferred. Requires: hostname, domain name, RSA keys, local user or AAA
   - VTY lines: `transport input ssh` only
 - 🔗 OSI Layer: Layer 7, TCP 22
+- 📋 Prerequisites: `hostname` + `ip domain-name` configured. RSA keys generated. User or AAA configured
 - ⚙️ Commands
   - `hostname R1` → `ip domain-name company.local`
-  - `crypto key generate rsa modulus 2048` → `ip ssh version 2`
+  - `crypto key generate rsa modulus 2048`
+  - `ip ssh version 2`
   - `username admin privilege 15 secret SecureP@ss1`
   - `line vty 0 15` → `transport input ssh` → `login local`
   - L2 switch: `interface vlan 1` → IP → `no shutdown` → `ip default-gateway 192.168.1.1`
+  - [IOS-XR] `ssh server v2` → `ssh server vrf default`
 - 🔍 Verification
   - `show ip ssh` | `show ssh`
 - 🔧 Troubleshooting
-  - ⚠️ Connection refused → no RSA keys → `crypto key generate rsa modulus 2048`
+  - ⚠️ Connection refused → no RSA keys → `show ip ssh` → generate keys
   - ⚠️ Connects then drops → `transport input ssh` or `login local` missing
   - ⚠️ Can't SSH to switch → no SVI IP or no `ip default-gateway`
 
 ### QoS
 - 📖 Manages bandwidth, delay, jitter, loss for real-time traffic
   - VoIP requirements: delay ≤150ms, jitter ≤30ms, loss ≤1%
-  - PCP (3-bit in 802.1Q tag): L2 marking | DSCP (6-bit in IP header): L3 marking
-  - DSCP: EF=46 (VoIP), AF4x (video), AF3x (streaming), AF2x (priority data), DF=0
+  - PCP (3-bit in 802.1Q tag): L2 marking | DSCP (6-bit in IP header): L3 marking (survives routing)
+  - DSCP values: EF=46 (VoIP), AF4x (video), AF3x (streaming), AF2x (priority data), DF=0 (best-effort)
   - CBWFQ: bandwidth guarantee per class | LLQ: strict priority for VoIP
   - Shaping: buffers excess | Policing: drops or re-marks excess
 - 🔗 OSI Layer: L2 (PCP) and L3 (DSCP)
@@ -1547,19 +837,20 @@ const CCNA_MD = `
 - 🔍 Verification
   - `show policy-map interface <int>` | `show mls qos interface <int>`
 - 🔧 Troubleshooting
-  - ⚠️ VoIP choppy → thresholds exceeded → `show policy-map interface` → ensure LLQ for EF
-  - ⚠️ DSCP re-marked → trust boundary wrong → `mls qos trust dscp`
+  - ⚠️ VoIP choppy → thresholds exceeded → `show policy-map interface` → ensure LLQ for DSCP EF
+  - ⚠️ DSCP markings re-marked → trust boundary wrong → `mls qos trust dscp`
 
 ### FTP and TFTP
-- 📖 File transfer for IOS upgrades and config backups
-  - TFTP: UDP 69, no auth/encryption, built-in ACK/retry
-  - FTP: TCP 20/21, username/password, full directory operations
-  - FTPS = FTP + TLS | SFTP = SSH-based (separate protocol)
+- 📖 File transfer protocols for IOS upgrades and config backups
+  - TFTP: UDP 69, no auth, no encryption, built-in ACK/retry reliability, lightweight
+  - FTP: TCP 20/21, username/password, full directory operations, no encryption by default
+  - FTPS = FTP + TLS | SFTP = SSH-based (completely separate protocol)
 - 🔗 OSI Layer: Layer 7. TFTP=UDP 69, FTP=TCP 20/21
 - ⚙️ Commands
   - `show flash` | `show version` — current image
-  - `copy tftp flash` | `copy ftp flash`
-  - Config backup: `copy running-config tftp`
+  - `copy tftp flash` — copy IOS from TFTP
+  - FTP: `ip ftp username ftpuser` → `ip ftp password ftppassword` → `copy ftp flash`
+  - Backup: `copy running-config tftp`
   - Boot new: `boot system flash <filename>` → `write memory` → `reload`
 - 🔧 Troubleshooting
   - ⚠️ TFTP fails → server unreachable or wrong filename → `ping <server>`
@@ -1574,27 +865,30 @@ const CCNA_MD = `
   - Confidentiality: only authorized users access data
   - Integrity: data unmodified and authentic
   - Availability: systems accessible to authorized users
-- 📖 Common Attacks
+  - Vulnerability → Exploit → Threat → Mitigation
+- 📖 Common Attack Types
   - DoS/DDoS: SYN flood exhausts TCP connections | Botnet = distributed DoS
-  - ARP Poisoning: Gratuitous ARP poisons tables → MitM
+  - ARP Poisoning: Gratuitous ARP poisons ARP tables → MitM traffic interception
   - DHCP Starvation/Poisoning: spoofed MACs exhaust pool or install rogue server
   - Reflection/Amplification: spoofed source IP → large response floods target
   - Social Engineering: phishing, vishing, smishing, tailgating, watering hole
-  - Malware: Virus (host required), Worm (self-propagating), Trojan (disguised)
+  - Malware: Virus (host required), Worm (self-propagating), Trojan (disguised as legit)
 - ⚙️ Device Hardening
   - `service password-encryption` — Type 7 (weak but better than plaintext)
-  - `enable secret SecureP@ss123` — Type 5 MD5 (always use)
-  - Disable unused interfaces: `shutdown` + description
-  - `no cdp enable` on external-facing ports
-  - VTY ACL: `access-class <acl> in` | `exec-timeout 5 0`
+  - `enable secret SecureP@ss123` — Type 5 MD5 (always use for privileged access)
+  - Disable unused interfaces: `shutdown` + add description
+  - `no cdp run` / `no cdp enable` on untrusted external-facing ports
+  - VTY ACL: `access-class <acl> in` on VTY lines
+  - `exec-timeout 5 0` on console and VTY lines
 
 ### ACLs
 - 📖 Ordered packet filter — first match wins, implicit deny any at end
   - Standard (1–99, 1300–1999): source IP only → place near DESTINATION
-  - Extended (100–199, 2000–2699): src/dst IP, protocol, port → place near SOURCE
-  - Named ACLs: easier editing with sequence numbers
+  - Extended (100–199, 2000–2699): src IP, dst IP, protocol, port → place near SOURCE
+  - Named ACLs: easier to edit with sequence numbers
   - Wildcard mask: 0=must match, 1=ignore
-- 🔗 OSI Layer: L3 (IP) and L4 (port) for extended
+- 🔗 OSI Layer: L3 (IP) and L4 (port) for extended ACLs
+- 📋 Prerequisites: Specific rules first. Add explicit `permit ip any any` if needed. Extended near source
 - ⚙️ Standard Named ACL
   - `ip access-list standard BLOCK_HOST` → `deny host 10.1.1.100` → `permit any`
   - Apply: `ip access-group BLOCK_HOST in`
@@ -1608,36 +902,39 @@ const CCNA_MD = `
 - 🔍 Verification
   - `show access-lists` — hit counters | `show ip interface <int>` — applied ACLs
 - 🔧 Troubleshooting
-  - ⚠️ Traffic blocked unexpectedly → wrong rule order → review hit counters → resequence
+  - ⚠️ Traffic blocked unexpectedly → wrong order → review hit counters → resequence
   - ⚠️ Broad permit hits before deny → more specific rules must come first
   - ⚠️ ACL wrong direction → `show ip interface <int>` → check in vs out
 
 ### IPsec VPN
-- 📖 IPsec: encryption, auth, integrity for IP traffic
+- 📖 IPsec: encryption, authentication, integrity for IP traffic
   - Site-to-site: permanent tunnel between two gateway routers
-  - Remote-access: TLS tunnel per user (Cisco AnyConnect)
-  - IPsec = unicast only → GRE over IPsec adds broadcast/multicast (enables OSPF)
-  - DMVPN: dynamic hub-and-spoke with automatic spoke-to-spoke tunnels
-- 🔗 OSI Layer: Layer 3
+  - Remote-access: TLS tunnel per user (Cisco AnyConnect), uses TCP 443
+  - IPsec = unicast only → GRE over IPsec adds broadcast/multicast (enables OSPF over VPN)
+  - DMVPN: dynamic hub-and-spoke with automatic spoke-to-spoke tunnel creation
+- 🔗 OSI Layer: Layer 3 (Network)
 - ⚙️ GRE Tunnel Commands
   - `interface Tunnel0` → `ip address 172.16.0.1 255.255.255.0`
   - `tunnel source GigabitEthernet0/1` → `tunnel destination 203.0.113.2`
-  - OSPF over tunnel: `ip ospf network point-to-point` on both ends
+  - OSPF over tunnel: `ip ospf network point-to-point` on both tunnel interfaces
+  - ISP default route: `ip route 0.0.0.0 0.0.0.0 203.0.113.1`
 - 🔍 Verification
   - `show interfaces Tunnel0` | `show crypto isakmp sa` | `show crypto ipsec sa`
 - 🔧 Troubleshooting
   - ⚠️ Tunnel up but no traffic → IPsec SA not established → check pre-shared key both sides
-  - ⚠️ OSPF not forming → network type mismatch → `ip ospf network point-to-point`
+  - ⚠️ OSPF not forming over tunnel → network type mismatch → `ip ospf network point-to-point`
 
 ### Wireless Security
 - 📖 WPA Certification Levels
-  - WPA1: TKIP — deprecated | WPA2: CCMP/AES — current standard
-  - WPA3: GCMP/AES — adds SAE, PMF, Forward Secrecy
-  - Personal mode: PSK | Enterprise mode: 802.1X with RADIUS
+  - WPA1: TKIP — deprecated, avoid
+  - WPA2: CCMP/AES — current standard, widely supported
+  - WPA3: GCMP/AES — latest: adds SAE (replaces 4-way handshake), PMF, Forward Secrecy
+  - Personal mode: PSK | Enterprise mode: 802.1X with RADIUS server
 - 📖 EAP Methods
-  - LEAP: deprecated | EAP-FAST: Cisco, PAC + TLS tunnel
+  - LEAP: deprecated (Cisco)
+  - EAP-FAST: Cisco, PAC + TLS tunnel
   - PEAP: TLS tunnel + MS-CHAP, server cert only
-  - EAP-TLS: most secure — certs on BOTH client and server
+  - EAP-TLS: most secure, certs on BOTH client and server
 - 🔗 OSI Layer: Layer 2 (Data Link)
 - ⚙️ WPA2 PSK (WLC GUI)
   - WLANs → Create → Security → WPA+WPA2 → AES → PSK → enter passphrase
@@ -1647,12 +944,14 @@ const CCNA_MD = `
 
 ### AAA
 - 📖 Framework for access control
-  - Authentication: verify identity | Authorization: grant permissions | Accounting: log activity
+  - Authentication: verify identity
+  - Authorization: grant permissions
+  - Accounting: log activity
   - TACACS+ (Cisco): TCP 49, separates AAA, used for device administration via SSH
-  - RADIUS (open): UDP 1812/1813, combines auth+authz, used for 802.1X/VPN/network access
+  - RADIUS (open standard): UDP 1812/1813, combines auth+authz, used for 802.1X/VPN/network access
   - Cisco ISE = AAA server solution
 - 🔗 OSI Layer: Layer 7 (Application)
-- 📋 Prerequisites: Server reachable. Shared secret matches. ALWAYS configure fallback local auth
+- 📋 Prerequisites: AAA server reachable. Shared secret matches. ALWAYS configure fallback local auth
 - ⚙️ TACACS+ Commands
   - `aaa new-model`
   - `tacacs server ISE` → `address ipv4 10.1.1.200` → `key TacKey`
@@ -1662,8 +961,8 @@ const CCNA_MD = `
 - 🔍 Verification
   - `show aaa servers` | `test aaa group tacacs+ admin password legacy`
 - 🔧 Troubleshooting
-  - ⚠️ Auth failing → shared secret wrong or unreachable → `show aaa servers`
-  - ⚠️ Locked out → use console → `aaa authentication login console local`
+  - ⚠️ Auth failing → shared secret wrong or server unreachable → `show aaa servers`
+  - ⚠️ Locked out → use console (AAA typically doesn't apply) → `aaa authentication login console local`
 
 ---
 
@@ -1671,46 +970,49 @@ const CCNA_MD = `
 
 ### SDN & Network Planes
 - 📖 Three Logical Planes
-  - Data Plane: forwards user traffic — ASICs + TCAM at wire speed (NOT CPU)
+  - Data Plane: forwards user traffic — handled by ASICs + TCAM at wire speed (NOT CPU)
   - Control Plane: builds routing/MAC/ARP/STP tables — CPU processed
-  - Management Plane: SSH, SNMP, Syslog, NTP — device management
+  - Management Plane: SSH, SNMP, Syslog, NTP — device management traffic
 - 📖 SDN Architecture
   - Centralizes Control Plane into a software controller
-  - SBI (Southbound): controller → devices (NETCONF, RESTCONF, OpenFlow)
-  - NBI (Northbound): apps/scripts → controller (REST API)
+  - Southbound Interface (SBI): controller → devices (NETCONF, RESTCONF, OpenFlow, OpFlex)
+  - Northbound Interface (NBI): apps/scripts → controller (REST API)
   - Cisco SD-Access: DNA Center + IS-IS underlay + VXLAN/LISP overlay
-  - Node roles: Edge (end hosts), Border (WAN), Control (LISP)
+  - SD-Access node roles: Edge (end hosts), Border (WAN/external), Control (LISP mapping)
 - 🔗 OSI Layer: All layers
 - ⚙️ Enable RESTCONF [IOS-XE]
   - `ip http secure-server` → `restconf` → `netconf-yang`
 - 🔍 Verification
   - `show netconf-yang status` | DNA Center: Design → Provision → Assurance
 - 🔧 Troubleshooting
-  - ⚠️ Device not in DNA Center → check SNMP community + SSH credentials
-  - ⚠️ NETCONF failing → `netconf-yang` not enabled
+  - ⚠️ Device not in DNA Center → discovery failed → check SNMP community + SSH credentials
+  - ⚠️ NETCONF failing → not enabled → `netconf-yang` in global config
 
 ### REST APIs
 - 📖 Representational State Transfer
-  - 6 constraints: stateless, client-server, cacheable, uniform interface, layered, code-on-demand
+  - Six constraints: stateless, client-server, cacheable, uniform interface, layered, code-on-demand
   - CRUD → HTTP: Create=POST, Read=GET, Update=PUT/PATCH, Delete=DELETE
-  - Data format: JSON (most common) or XML | Auth: Basic, Bearer Token, OAuth
+  - Data format: JSON (most common) or XML
+  - Auth: Basic, Bearer Token, OAuth
 - 📖 HTTP Status Codes
   - 200=OK, 201=Created, 400=Bad Request, 401=Unauthorized, 403=Forbidden, 404=Not Found, 500=Server Error
-- 🔗 OSI Layer: Layer 7, HTTPS TCP 443
+- 🔗 OSI Layer: Layer 7 (Application), HTTPS TCP 443
 - 🔧 Troubleshooting
-  - ⚠️ 401 Unauthorized → wrong credentials / expired token → re-authenticate
-  - ⚠️ 404 Not Found → wrong URI or API version → check documentation
+  - ⚠️ 401 Unauthorized → wrong credentials or expired token → re-authenticate
+  - ⚠️ 404 Not Found → wrong URI or wrong API version → check documentation
 
 ### JSON, XML, and YAML
 - 📖 JSON (JavaScript Object Notation)
   - Key-value pairs in `{}` objects and `[]` arrays
-  - Types: string (quoted), number, boolean, null | Whitespace insignificant
-  - Used by REST APIs
+  - Types: string (quoted), number, boolean (true/false), null
+  - Whitespace insignificant | Used by REST APIs
 - 📖 YAML (YAML Ain't Markup Language)
-  - Most human-readable | Indentation significant (spaces only, no tabs)
-  - Starts with `---` | Lists use `-` | `key: value` pairs | Used by Ansible
+  - Most human-readable serialization format
+  - Indentation significant (spaces only, no tabs!)
+  - Starts with `---` | Lists use `-` | `key: value` pairs
+  - Used by Ansible playbooks and inventories
 - 📖 XML (Extensible Markup Language)
-  - `<key>value</key>` format | Less readable | Used by NETCONF
+  - `<key>value</key>` format | Less human-readable | Used by NETCONF
 - 🔧 Troubleshooting
   - ⚠️ JSON parse error → trailing comma or unquoted string → validate at jsonlint.com
   - ⚠️ YAML error → tabs instead of spaces → convert all indentation to spaces
@@ -1718,30 +1020,30 @@ const CCNA_MD = `
 ### Ansible, Puppet, and Chef
 - 📖 Configuration Management — fight config drift at scale
 - 📖 Ansible (Red Hat)
-  - Agentless, push model, SSH, Python
+  - Agentless, push model, uses SSH, written in Python
   - Files: Playbooks (YAML), Inventory (INI/YAML), Templates (Jinja2), Variables (YAML)
 - 📖 Puppet
-  - Agent-based or agentless proxy, pull model, TCP 8140
-  - Files: Manifests (desired state), Templates
+  - Agent-based (or agentless proxy), pull model, TCP 8140
+  - Files: Manifests (desired state), Templates (generate manifests)
 - 📖 Chef
-  - Agent-based, pull model, TCP 10002, Ruby DSL
-  - Files: Resources → Recipes → Cookbooks → Run-List
+  - Agent-based, pull model, TCP 10002
+  - Files: Resources → Recipes → Cookbooks → Run-List, Ruby DSL
 - 📖 Quick Comparison (memorize)
-  - Ansible: agentless + push + SSH
-  - Puppet: agent + pull + TCP 8140
-  - Chef: agent + pull + TCP 10002
+  - Ansible: agentless + push model + SSH
+  - Puppet: agent-based + pull model + TCP 8140
+  - Chef: agent-based + pull model + TCP 10002
 - 🔧 Troubleshooting
-  - ⚠️ Ansible SSH failing → add to known_hosts or disable StrictHostKeyChecking
-  - ⚠️ Config drift → `ansible-playbook --diff` to detect delta → push correct state
+  - ⚠️ Ansible SSH auth failing → add device to known_hosts or disable StrictHostKeyChecking
+  - ⚠️ Config drift → `ansible-playbook --diff` to detect differences → push correct state
 
-### Traditional vs Controller-Based
+### Traditional vs Controller-Based Networking
 - 📖 Traditional Networks
   - Engineers SSH to each device individually — slow and error-prone
-  - Per-device config, no central compliance enforcement
+  - Per-device configuration, no central compliance enforcement
 - 📖 Controller-Based (SDN)
   - DNA Center centrally manages all devices
   - Intent-based: describe what you want, controller handles how
-  - Centrally managed: versions, policies, configs, zero-touch provisioning
+  - Centrally managed: software versions, policies, configs, zero-touch provisioning
 - 📖 Key Architecture Concepts
   - ASIC + TCAM: wire-speed forwarding without CPU
   - Underlay: physical IS-IS routed network (all L3 links, no STP)
@@ -1754,129 +1056,137 @@ const CCNA_MD = `
 </div>
 
 <script>
-(function () {
-  const html   = document.documentElement;
-  const loader = document.getElementById('loader');
-  const wrap   = document.getElementById('map-wrap');
-  let mm = null;
+window.addEventListener('load', () => {
+  const html = document.documentElement;
+  const themeBtn = document.getElementById('btn-theme');
+  const themeLabel = document.getElementById('theme-label');
+  const toolbarHeight = () => getComputedStyle(document.documentElement).getPropertyValue('--toolbar-h').trim();
+  let recolorTimer;
 
-  function walk(node, fn, depth) {
-    fn(node, depth);
-    if (node.children) node.children.forEach(c => walk(c, fn, depth + 1));
+  const palettes = {
+    light: ['#4B56D2', '#0F766E', '#B45309', '#BE185D', '#2563EB', '#6D28D9'],
+    dark:  ['#C2CCFF', '#7EE7D9', '#F8C58F', '#F6B4D4', '#A9CFFF', '#D0BCFF']
+  };
+
+  function setThemeButtonLabel() {
+    themeLabel.textContent = html.getAttribute('data-theme') === 'light' ? 'Dark mode' : 'Light mode';
   }
 
-  /* ── Build the map ──────────────────────────────────────────────────────
-     We know from the console that markmap-autoloader lazy-loads:
-       d3, markmap-lib, markmap-view
-     These set window.markmap.Transformer and window.markmap.Markmap.
-     We use CCNA_MD (a JS string — never null) as the markdown source.
-     No intercept, no DOM reading, no Transformer guessing.
-  ──────────────────────────────────────────────────────────────────────── */
-  function buildMap() {
-    const mlib        = window.markmap;
-    const Markmap     = mlib && mlib.Markmap;
-    const Transformer = mlib && mlib.Transformer;
-
-    if (!Markmap || !Transformer) return false; /* retry — libs not ready yet */
-
-    try {
-      const { root } = new Transformer().transform(CCNA_MD);
-
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.style.cssText = 'width:100%;height:100%;display:block;';
-      wrap.innerHTML = '';
-      wrap.appendChild(svg);
-
-      /* One rAF so the SVG has real pixel dimensions before Markmap fits */
-      requestAnimationFrame(function () {
-        mm = Markmap.create(svg, {
-          duration: 350, maxWidth: 460, initialExpandLevel: 2,
-          zoom: true, pan: true,
-        }, root);
-        loader.style.opacity = '0';
-        setTimeout(function () { loader.style.display = 'none'; }, 380);
-      });
-      return true;
-    } catch (e) {
-      console.error('buildMap error:', e);
-      loader.innerHTML = '<span style="color:#f87171;font-size:12px">Error: '
-                       + e.message + '</span>';
-      return true; /* stop retrying — show the error */
-    }
+  function getTopBranch(node) {
+    let current = node;
+    while (current && current.parent && current.parent.depth > 0) current = current.parent;
+    return current && current.depth === 1 ? current : null;
   }
 
-  /* ── Retry loop ─────────────────────────────────────────────────────────
-     window.onload fires after markmap-autoloader.js has executed.
-     The autoloader then lazy-loads markmap-lib + markmap-view async.
-     We retry every 250ms (up to 20 s) until Transformer appears.
-  ──────────────────────────────────────────────────────────────────────── */
-  function startRetry() {
-    if (buildMap()) return;
-    var tries = 0;
-    var t = setInterval(function () {
-      if (buildMap() || ++tries > 80) {
-        clearInterval(t);
-        setTimeout(function () {
-          if (!mm) loader.innerHTML =
-            '<div style="color:var(--dim);font-size:12px;text-align:center">' +
-            'CDN unavailable — check internet connection</div>';
-        }, 500);
+  function branchKey(node, index) {
+    return `${index}::${(node && (node.content || node.t || node.name || '')).toString()}`;
+  }
+
+  function recolorMap() {
+    const svg = document.querySelector('svg.markmap');
+    if (!svg) return;
+
+    const theme = html.getAttribute('data-theme') || 'light';
+    const styles = getComputedStyle(html);
+    svg.style.cssText = `position:fixed;top:${toolbarHeight()};left:0;width:100%;height:calc(100vh - ${toolbarHeight()});background:${styles.getPropertyValue('--canvas').trim()};`;
+
+    const palette = palettes[theme];
+    const root = svg.__data__;
+    const topBranches = Array.isArray(root?.children) ? root.children : [];
+    const branchColors = new Map(
+      topBranches.map((branch, index) => [branchKey(branch, index), palette[index % palette.length]])
+    );
+
+    const nodes = svg.querySelectorAll('g.markmap-node');
+    nodes.forEach((nodeEl) => {
+      const datum = nodeEl.__data__;
+      if (!datum) return;
+
+      const topBranch = getTopBranch(datum);
+      const branchIndex = topBranches.indexOf(topBranch);
+      const color = topBranch
+        ? branchColors.get(branchKey(topBranch, branchIndex))
+        : styles.getPropertyValue('--accent').trim();
+
+      const depth = Number(datum.depth || 0);
+      const circle = nodeEl.querySelector(':scope > circle');
+      const text = nodeEl.querySelector(':scope > text');
+      const bg = nodeEl.querySelector(':scope > .markmap-node-bg');
+
+      nodeEl.dataset.depth = String(depth);
+
+      if (circle) {
+        circle.setAttribute('stroke', color);
+        circle.setAttribute('fill', styles.getPropertyValue('--canvas').trim());
+        circle.setAttribute('stroke-width', depth <= 1 ? '2.1' : '1.65');
       }
-    }, 250);
+
+      if (text) {
+        if (depth === 1) {
+          text.setAttribute('fill', color);
+        } else if (depth >= 2) {
+          text.setAttribute('fill', styles.getPropertyValue('--node-secondary').trim());
+        } else {
+          text.setAttribute('fill', styles.getPropertyValue('--text').trim());
+        }
+      }
+
+      if (bg) {
+        bg.setAttribute('rx', '8');
+        bg.setAttribute('ry', '8');
+      }
+    });
+
+    const links = svg.querySelectorAll('path.markmap-link');
+    links.forEach((linkEl) => {
+      const datum = linkEl.__data__;
+      const target = datum?.target || datum?.data?.target || null;
+      const topBranch = target ? getTopBranch(target) : null;
+      const branchIndex = topBranches.indexOf(topBranch);
+      const color = topBranch
+        ? branchColors.get(branchKey(topBranch, branchIndex))
+        : styles.getPropertyValue('--text-soft').trim();
+
+      const targetDepth = Number(target?.depth || 0);
+      linkEl.setAttribute('stroke', color);
+      linkEl.setAttribute('stroke-opacity', theme === 'dark' ? '0.58' : '0.5');
+      linkEl.setAttribute('stroke-width', targetDepth <= 1 ? '2.3' : '1.85');
+    });
   }
 
-  if (document.readyState === 'complete') {
-    startRetry();
-  } else {
-    window.addEventListener('load', startRetry);
+  function scheduleRecolor(delay = 90) {
+    clearTimeout(recolorTimer);
+    recolorTimer = setTimeout(recolorMap, delay);
   }
 
-  /* ── Theme ── */
-  document.getElementById('btn-theme').addEventListener('click', function () {
-    var dark = html.getAttribute('data-theme') === 'dark';
-    html.setAttribute('data-theme', dark ? 'light' : 'dark');
-    document.getElementById('i-moon').style.display = dark ? 'none' : '';
-    document.getElementById('i-sun').style.display  = dark ? ''     : 'none';
+  themeBtn.addEventListener('click', () => {
+    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', next);
+    setThemeButtonLabel();
+    scheduleRecolor(40);
   });
 
-  /* ── Toolbar buttons ── */
-  function act(fn) { if (mm) fn(mm); }
+  setThemeButtonLabel();
+  setTimeout(recolorMap, 700);
+  setTimeout(recolorMap, 1500);
+  setTimeout(recolorMap, 2500);
 
-  document.getElementById('btn-fit').addEventListener('click',
-    function () { act(function (m) { m.fit(); }); });
-  document.getElementById('btn-in').addEventListener('click',
-    function () { act(function (m) { m.rescale(1.3); }); });
-  document.getElementById('btn-out').addEventListener('click',
-    function () { act(function (m) { m.rescale(0.77); }); });
-
-  document.getElementById('btn-expand').addEventListener('click', function () {
-    act(function (m) {
-      walk(m.state.data, function (node) {
-        if (!node.payload) node.payload = {};
-        node.payload.fold = 0;
-      }, 0);
-      m.renderData();
-      setTimeout(function () { m.fit(); }, 400);
-    });
+  const observer = new MutationObserver((mutations) => {
+    const relevant = mutations.some((m) =>
+      m.type === 'childList' ||
+      (m.type === 'attributes' && ['transform', 'd', 'style'].includes(m.attributeName))
+    );
+    if (relevant) scheduleRecolor();
+  });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['transform', 'd', 'style']
   });
 
-  document.getElementById('btn-collapse').addEventListener('click', function () {
-    act(function (m) {
-      walk(m.state.data, function (node, depth) {
-        if (!node.payload) node.payload = {};
-        node.payload.fold = (depth >= 1 && node.children && node.children.length) ? 1 : 0;
-      }, 0);
-      m.renderData();
-      setTimeout(function () { m.fit(); }, 400);
-    });
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    if (e.key === 'f' || e.key === 'F') act(function (m) { m.fit(); });
-    if (e.key === '+' || e.key === '=') act(function (m) { m.rescale(1.3); });
-    if (e.key === '-')                  act(function (m) { m.rescale(0.77); });
-  });
-})();
+  window.addEventListener('resize', () => scheduleRecolor(30));
+});
 </script>
 </body>
+</html>
