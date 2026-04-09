@@ -105,9 +105,15 @@ markmap:
   - [IOS/IOS-XE] `ip address 192.168.1.1 255.255.255.0`
   - [IOS-XR] `ipv4 address 192.168.1.1/24`
   - Windows: `ipconfig /all` | Linux: `ip addr show`
+- 📋 Default Gateway
+  - End hosts: set to the L3 interface IP in their subnet (router sub-interface, SVI, or FHRP VIP)
+  - L2 switches (management): `ip default-gateway 192.168.1.1` — required for SSH/SNMP from other subnets
+  - Routers: `ip route 0.0.0.0 0.0.0.0 <next-hop>` — Gateway of Last Resort toward ISP
+  - DHCP clients receive default gateway via `default-router` option in DHCP pool
 - 🔧 Troubleshooting
   - ⚠️ Can't reach gateway → wrong subnet mask → reconfigure host
   - ⚠️ 169.254.x.x (APIPA) → DHCP failure → `ipconfig /release` + `/renew`
+  - ⚠️ L2 switch unreachable from other subnet → `ip default-gateway` missing → add it
 
 ### IPv6 Addressing
 - 📖 Address Types
@@ -453,10 +459,17 @@ markmap:
   - Routed uplink: `interface GigabitEthernet0/0` → `no switchport` → `ip address ...`
 - 🔍 Verification
   - `show ip route` | `show interface vlan 10`
+- 📋 Default Gateway for hosts
+  - ROAS: hosts in each VLAN must use the sub-interface IP as their default gateway
+    - e.g. VLAN 10 hosts → DGW = `192.168.10.1` (GigabitEthernet0/0.10)
+  - SVI: hosts in each VLAN must use the SVI IP as their default gateway
+    - e.g. VLAN 10 hosts → DGW = `192.168.10.1` (interface vlan 10)
+  - With FHRP: hosts use the Virtual IP (VIP) — see HSRP/VRRP/GLBP node
 - 🔧 Troubleshooting
   - ⚠️ ROAS not routing → VLAN tag mismatch → `encapsulation dot1q` must match VLAN ID
   - ⚠️ SVI down/down → VLAN missing or no active port → `show vlan brief` → create VLAN + active port
   - ⚠️ VLANs can't reach each other → `ip routing` missing on multilayer switch
+  - ⚠️ Hosts can reach gateway but not other VLANs → host DGW pointing to wrong IP → fix host config
 
 ### FHRP (HSRP / VRRP / GLBP)
 - 📖 First Hop Redundancy — gateway failover
@@ -485,25 +498,42 @@ markmap:
 ## 4. IP Services
 
 ### NAT
-- 📖 Modifies source/destination IPs — enables private hosts to reach internet
-  - Static NAT: 1-to-1 permanent mapping
-  - Dynamic NAT: pool of public IPs, 1-to-1, can exhaust pool
-  - PAT/Overload: many private → 1 public IP using unique ports — most common
-  - Inside Local = private IP | Inside Global = public IP used externally
-- 🔗 OSI Layer: Layer 3 — modifies IP header
-- 📋 Prerequisites: Define inside/outside interfaces. ACL for traffic. Pool for dynamic NAT
+- 📖 NAT Types
+  - Static NAT: 1-to-1 permanent mapping — supports inbound connections to inside hosts
+  - Dynamic NAT: pool of public IPs assigned on-demand, 1-to-1, no port overloading
+    - Pool exhaustion: if all public IPs in use → NEW connections are DROPPED (not queued)
+    - Entries age out: TCP 24h, UDP 5min, ICMP 1min by default
+    - Use case: block of public IPs, not many simultaneous sessions
+  - PAT / NAT Overload: many private IPs → 1 public IP using unique source ports — most common
+    - 16-bit port field = up to ~65,000 concurrent sessions per public IP
+    - Use case: single ISP public IP (home/SMB), large enterprise behind one public IP
+  - Inside Local = private source IP | Inside Global = public IP used externally
+  - Outside Global = destination IP (public server)
+- 🔗 OSI Layer: Layer 3 — modifies IP header (and L4 for PAT)
+- 📋 Prerequisites: Define inside/outside on interfaces. ACL to match inside hosts. Pool for Dynamic NAT
 - ⚙️ Static NAT
   - `ip nat inside source static 192.168.1.10 203.0.113.10`
-  - On interfaces: `ip nat inside` (LAN) and `ip nat outside` (WAN)
-- ⚙️ PAT (Overload)
+  - LAN interface: `ip nat inside` | WAN interface: `ip nat outside`
+- ⚙️ Dynamic NAT (pool)
+  - `ip nat pool PUBLIC_POOL 203.0.113.10 203.0.113.20 netmask 255.255.255.0`
+  - `access-list 1 permit 192.168.1.0 0.0.0.255`
+  - `ip nat inside source list 1 pool PUBLIC_POOL`
+  - LAN interface: `ip nat inside` | WAN interface: `ip nat outside`
+- ⚙️ PAT via interface (most common)
   - `access-list 1 permit 192.168.0.0 0.0.255.255`
   - `ip nat inside source list 1 interface GigabitEthernet0/1 overload`
+- ⚙️ PAT via pool
+  - `ip nat pool PAT_POOL 203.0.113.1 203.0.113.5 netmask 255.255.255.0`
+  - `ip nat inside source list 1 pool PAT_POOL overload`
 - 🔍 Verification
-  - `show ip nat translations` | `show ip nat statistics` | `clear ip nat translation *`
+  - `show ip nat translations` — Inside Local ↔ Inside Global mappings + ports (PAT)
+  - `show ip nat statistics` — active entries, pool utilization, misses (= pool exhausted or ACL miss)
+  - `clear ip nat translation *` — clear all dynamic/PAT entries
 - 🔧 Troubleshooting
-  - ⚠️ NAT not translating → ACL mismatch or inside/outside not set → `show ip nat statistics` (check misses)
-  - ⚠️ Pool exhaustion → add more IPs or switch to PAT
-  - ⚠️ Static NAT not working → verify inside/outside on correct interfaces
+  - ⚠️ Dynamic NAT pool exhausted → `show ip nat statistics` misses rising → expand pool or convert to PAT
+  - ⚠️ NAT not translating → ACL doesn't match inside host subnet → verify `access-list` matches exactly
+  - ⚠️ Static NAT not working → inside/outside assigned to wrong interfaces → swap with `ip nat inside/outside`
+  - ⚠️ PAT entries not clearing → sessions still active → `clear ip nat translation *` then verify
 
 ### DHCP
 - 📖 Automatically assigns IP, mask, gateway, DNS via DORA
@@ -845,6 +875,273 @@ markmap:
 - 🔧 Troubleshooting
   - ⚠️ DNA Center shows device unreachable → wrong SNMP community or SSH credentials
   - ⚠️ Policy not applying → provisioning failed → check DNA Center workflow logs
+---
+
+## 7. Network Best Practices
+
+### Switch Setup Checklist
+- 📖 Ordered sequence — apply top-to-bottom on every managed switch
+- 🔗 Scope: All IOS/IOS-XE Layer 2 and multilayer switches
+- ⚙️ Step 1 — Identity & Management
+  - `hostname SW1`
+  - `ip domain-name company.local`
+  - `no ip domain-lookup`
+  - `banner motd ^Authorized access only. Activity is monitored and logged.^`
+  - Management VLAN (use a dedicated VLAN, NOT VLAN 1):
+    - `interface vlan 99` → `ip address 10.0.99.2 255.255.255.0` → `no shutdown`
+    - `ip default-gateway 10.0.99.1`
+- ⚙️ Step 2 — Local Authentication (use AAA in production — see AAA node)
+  - `enable secret <strong-password>` — never use `enable password`
+  - `service password-encryption`
+  - `username admin privilege 15 secret <strong-password>`
+  - `username netops privilege 7 secret <strong-password>`
+  - `username readonly privilege 1 secret <strong-password>`
+- ⚙️ Step 3 — SSH Only (disable Telnet — see SSH node)
+  - `crypto key generate rsa modulus 2048`
+  - `ip ssh version 2`
+  - `line vty 0 15` → `login local` → `transport input ssh` → `exec-timeout 5 0`
+  - `line console 0` → `login local` → `exec-timeout 5 0` → `logging synchronous`
+  - VTY ACL: `ip access-list standard MGMT_ACCESS` → `permit 10.0.0.0 0.0.0.255` → apply: `access-class MGMT_ACCESS in`
+- ⚙️ Step 4 — VLAN Hardening
+  - Change native VLAN from VLAN 1: `switchport trunk native vlan 999`
+  - Create VLAN 999 as unused/blackhole: `vlan 999` → `name BLACKHOLE`
+  - All unused ports: `shutdown` + `switchport access vlan 999`
+  - Disable DTP on all trunk ports: `switchport nonegotiate`
+  - VTP: `vtp mode transparent` (or `off`) to prevent VTP domain poisoning
+- ⚙️ Step 5 — STP Hardening (see STP node)
+  - `spanning-tree mode rapid-pvst`
+  - Manually elect root: `spanning-tree vlan <id> root primary` on distribution/core
+  - All access ports: `spanning-tree portfast` + `spanning-tree bpduguard enable`
+  - Global fallback: `spanning-tree portfast default` + `spanning-tree portfast bpduguard default`
+- ⚙️ Step 6 — L2 Attack Mitigation (details in respective nodes)
+  - Port Security on access ports → see Port Security node
+  - DHCP Snooping → see DHCP Snooping node
+  - Dynamic ARP Inspection (DAI) → see DAI node
+  - Storm Control: `storm-control broadcast level 20.00` on access ports
+  - IP Source Guard: `ip verify source` on access ports (requires DHCP Snooping binding table)
+- ⚙️ Step 7 — Monitoring
+  - NTP: `ntp server <ip> prefer` → see NTP node
+  - Syslog: `logging <server-ip>` → `logging trap informational` → see Syslog node
+  - SNMP: use SNMPv3 only → see SNMP node
+  - `service timestamps log datetime msec localtime show-timezone`
+- 🔍 Verification
+  - `show run` — full config review
+  - `show interfaces status` — all ports and assigned VLANs
+  - `show spanning-tree summary` — STP mode, root, PortFast/BPDU Guard
+  - `show port-security` | `show ip dhcp snooping` | `show ip arp inspection`
+  - `show users` — active sessions
+- 🔧 Common Mistakes
+  - ⚠️ Management on VLAN 1 → move SVI to dedicated VLAN + update `ip default-gateway`
+  - ⚠️ DTP left enabled → attacker can negotiate trunk → `switchport nonegotiate` on ALL trunk ports
+  - ⚠️ Native VLAN = VLAN 1 → VLAN hopping possible → change to unused VLAN on BOTH ends
+  - ⚠️ Unused ports not shut down → rogue device connection → shutdown + blackhole VLAN
+
+### Router Setup Checklist
+- 📖 Ordered sequence — apply top-to-bottom on every managed router
+- 🔗 Scope: All IOS/IOS-XE routers (edge, core, WAN)
+- ⚙️ Step 1 — Identity & Management
+  - `hostname R1`
+  - `ip domain-name company.local`
+  - `no ip domain-lookup`
+  - `banner motd ^Authorized access only. Activity is monitored and logged.^`
+- ⚙️ Step 2 — Local Authentication (use AAA in production — see AAA node)
+  - `enable secret <strong-password>` — never use `enable password`
+  - `service password-encryption`
+  - `username admin privilege 15 secret <strong-password>`
+  - `username netops privilege 7 secret <strong-password>`
+- ⚙️ Step 3 — SSH Only (disable Telnet — see SSH node)
+  - `crypto key generate rsa modulus 2048`
+  - `ip ssh version 2`
+  - `line vty 0 15` → `login local` → `transport input ssh` → `exec-timeout 5 0`
+  - `line console 0` → `login local` → `exec-timeout 5 0` → `logging synchronous`
+  - VTY ACL: restrict to management subnet only → `access-class MGMT_ACCESS in`
+- ⚙️ Step 4 — Disable Unused Services
+  - `no ip http server` | `no ip http secure-server` (unless needed)
+  - `no cdp run` on WAN/external interfaces: `no cdp enable`
+  - `no ip finger` | `no service tcp-small-servers` | `no service udp-small-servers`
+  - `no ip bootp server` | `no ip source-route`
+- ⚙️ Step 5 — Routing
+  - Configure routing protocol (OSPF/EIGRP) → see respective nodes
+  - `passive-interface default` → then `no passive-interface <routing-facing-int>` (OSPF/EIGRP)
+  - Default route toward ISP: `ip route 0.0.0.0 0.0.0.0 <ISP-next-hop>`
+- ⚙️ Step 6 — NAT / DHCP
+  - PAT on WAN interface: `ip nat inside source list <acl> interface <WAN-int> overload` → see NAT node
+  - DHCP pools per subnet or `ip helper-address` toward central DHCP server → see DHCP node
+- ⚙️ Step 7 — L3/L4 Security (details in Security Best Practices node)
+  - Anti-spoofing ACL inbound on WAN interface
+  - uRPF on WAN interface: `ip verify unicast source reachable-via rx`
+  - CoPP to protect router CPU from floods
+- ⚙️ Step 8 — Monitoring
+  - NTP: `ntp server <ip> prefer` → see NTP node
+  - Syslog: `logging <server-ip>` → `logging trap informational` → see Syslog node
+  - SNMP: SNMPv3 only → see SNMP node
+  - `service timestamps log datetime msec localtime show-timezone`
+- 🔍 Verification
+  - `show run` — full config review
+  - `show ip interface brief` — all interfaces
+  - `show ip route` — routing table including default route
+  - `show users` — active VTY sessions
+  - `show ip nat translations` | `show ip dhcp binding`
+- 🔧 Common Mistakes
+  - ⚠️ No `passive-interface` on LAN-facing interfaces → routing hellos sent to end hosts → enable passive
+  - ⚠️ `enable password` used instead of `enable secret` → MD5 not applied → use `enable secret`
+  - ⚠️ HTTP server left enabled → exposes web GUI → `no ip http server`
+  - ⚠️ CDP left on WAN interfaces → reveals IOS version and platform to ISP/attacker → `no cdp enable`
+
+### Access Control & Privilege Levels
+- 📖 IOS has 16 privilege levels (0–15)
+  - Level 1 = User EXEC (default after login) — `show` commands only, no config
+  - Level 15 = Privileged EXEC (after `enable`) — full access including `configure terminal`
+  - Levels 2–14 = Custom (assign specific commands to any level)
+  - Best practice: never give users direct Level 15 — use AAA + TACACS+ for granular control
+- 🔗 Scope: All IOS/IOS-XE devices
+- ⚙️ MOTD Banner (legal warning — not a welcome message)
+  - `banner motd ^`
+  - `Authorized users only. Unauthorized access is prohibited.`
+  - `All activity is monitored and recorded. Disconnect immediately if not authorized.`
+  - `^`
+  - Use delimiter that doesn't appear in text (common: `#`, `^`, `$`)
+  - Also configure: `banner login ^Enter credentials to proceed^`
+- ⚙️ Disable Telnet, enforce SSH
+  - `line vty 0 15` → `transport input ssh` → `login local`
+  - Verify no Telnet: `show line vty 0` → Transport Input should show `ssh` only
+- ⚙️ Local User Privilege Levels
+  - Full admin: `username admin privilege 15 secret Admin@Pass1`
+  - NOC / read-mostly: `username netops privilege 7 secret Netops@Pass1`
+  - Read-only: `username readonly privilege 1 secret Readonly@Pass1`
+- ⚙️ Custom Privilege Level (e.g. Level 7 = NOC with extended show access)
+  - `privilege exec level 7 show running-config`
+  - `privilege exec level 7 show ip route`
+  - `privilege exec level 7 show interfaces`
+  - `privilege exec level 7 ping`
+  - `privilege exec level 7 traceroute`
+  - `enable secret level 7 Noc@Level7Pass` — password to enter level 7
+  - NOC logs in → gets Level 7 automatically (via `username netops privilege 7`)
+- ⚙️ Console line hardening
+  - `line console 0` → `login local` → `exec-timeout 5 0` → `logging synchronous`
+  - `privilege level 15` on console only if physically secured
+- ⚙️ VTY line hardening
+  - `line vty 0 15` → `login local` → `transport input ssh` → `exec-timeout 5 0`
+  - `access-class MGMT_ACCESS in` — only allow SSH from management subnet
+- 🔍 Verification
+  - `show privilege` — current privilege level of active session
+  - `show run | section line vty` — verify transport input and access-class
+  - `show users` — all active sessions and their privilege levels
+  - `show run | include username` — all local user accounts
+- 🔧 Common Mistakes
+  - ⚠️ All users given privilege 15 → no separation of duties → create tiered accounts
+  - ⚠️ `transport input all` on VTY → Telnet still allowed → change to `transport input ssh`
+  - ⚠️ No `exec-timeout` → idle session stays open indefinitely → set `exec-timeout 5 0`
+  - ⚠️ Banner says "Welcome" → legally could imply consent to access → use authorized-only language
+
+### Layer 2 Security on Switch
+- 📖 Defense-in-depth at Layer 2 — stop attacks before they reach Layer 3
+  - VLAN hopping, MAC flooding, ARP poisoning, DHCP starvation/spoofing are all L2 attacks
+  - Enable in this order: Port Security → DHCP Snooping → DAI → IP Source Guard
+- 🔗 Scope: All access-layer switches
+- ⚙️ VLAN Hopping Prevention
+  - Change native VLAN from VLAN 1: `switchport trunk native vlan 999`
+  - Tag native VLAN explicitly (optional, adds double-tag protection): `vlan dot1q tag native`
+  - Disable DTP on all trunks: `switchport nonegotiate`
+  - Shutdown + blackhole all unused ports: `shutdown` + `switchport access vlan 999`
+- ⚙️ MAC Flooding Prevention
+  - Port Security on all access ports → see Port Security node
+  - `switchport port-security maximum 3` — limit MACs per port
+  - `switchport port-security violation restrict` — drop + log (avoid shutdown in production)
+- ⚙️ DHCP Starvation / Rogue DHCP Prevention
+  - DHCP Snooping → see DHCP Snooping node
+  - Key: mark ONLY uplinks as trusted, all host ports untrusted
+- ⚙️ ARP Poisoning / MitM Prevention
+  - DAI (Dynamic ARP Inspection) → see DAI node
+  - Requires DHCP Snooping binding table to be populated first
+  - For static IP hosts: create ARP ACL → `arp access-list STATIC_HOSTS`
+- ⚙️ IP Spoofing Prevention at Layer 2
+  - IP Source Guard: `ip verify source` on access ports
+  - Binds learned IP + MAC + port from DHCP Snooping table
+  - Drops packets whose source IP doesn't match the binding
+  - For static IP hosts: manually bind → `ip source binding <MAC> vlan <id> <IP> interface <int>`
+- ⚙️ Broadcast Storm Prevention
+  - `storm-control broadcast level 20.00` — drop broadcasts exceeding 20% of bandwidth
+  - `storm-control multicast level 20.00`
+  - `storm-control action shutdown` — err-disable port if threshold exceeded
+- ⚙️ STP Attack Prevention (BPDU Guard, Root Guard)
+  - PortFast + BPDU Guard on all access ports → see STP node
+  - Root Guard on ports that should never become root: `spanning-tree guard root`
+    - Apply on distribution-to-access uplinks to prevent rogue root bridge
+  - Loop Guard on non-designated ports: `spanning-tree guard loop`
+- 🔍 Verification
+  - `show ip dhcp snooping binding` — learned IP/MAC/VLAN/port bindings
+  - `show ip arp inspection statistics` — ARP inspection drops per VLAN
+  - `show ip verify source` — IP Source Guard bindings
+  - `show storm-control` — current thresholds and action
+  - `show spanning-tree detail` — Root Guard, Loop Guard status
+- 🔧 Common Mistakes
+  - ⚠️ DHCP Snooping not enabled before DAI → no binding table → DAI drops ALL ARP → enable Snooping first
+  - ⚠️ IP Source Guard on port with static IP host → drops legitimate traffic → add manual binding
+  - ⚠️ Root Guard on wrong ports → legitimate topology change blocked → only apply on access-facing uplinks
+  - ⚠️ Storm control too aggressive (level < 5%) → legitimate multicast dropped → tune per traffic profile
+
+### Layer 3 / Layer 4 Security on Router
+- 📖 Defense-in-depth at Layer 3/4 — protect routing infrastructure and block spoofed/malicious traffic
+  - Anti-spoofing, bogon filtering, uRPF, CoPP are industry-standard edge router hardening
+- 🔗 Scope: Edge routers, WAN-facing interfaces, distribution routers
+- ⚙️ Anti-Spoofing ACL (inbound on WAN/external interface)
+  - Block RFC 1918 addresses arriving from internet (they should never come from outside)
+  - `ip access-list extended ANTI_SPOOF_IN`
+  - `deny ip 10.0.0.0 0.255.255.255 any log`
+  - `deny ip 172.16.0.0 0.15.255.255 any log`
+  - `deny ip 192.168.0.0 0.0.255.255 any log`
+  - `deny ip 127.0.0.0 0.255.255.255 any log`
+  - `deny ip 169.254.0.0 0.0.255.255 any log`
+  - `deny ip 0.0.0.0 0.255.255.255 any log`
+  - `permit ip any any`
+  - Apply inbound on WAN: `interface GigabitEthernet0/1` → `ip access-group ANTI_SPOOF_IN in`
+  - Full ACL best practices → see ACLs node
+- ⚙️ uRPF — Unicast Reverse Path Forwarding
+  - Drops packets whose source IP is not reachable via the interface it arrived on
+  - Strict mode (single-homed): `ip verify unicast source reachable-via rx`
+  - Loose mode (multi-homed/asymmetric): `ip verify unicast source reachable-via any`
+  - Apply on WAN-facing interface: `interface GigabitEthernet0/1` → `ip verify unicast source reachable-via rx`
+  - Requires CEF: `ip cef` (default on IOS)
+- ⚙️ DHCP Attack Prevention at Router
+  - DHCP Snooping on distribution switch (L2) → see DHCP Snooping node
+  - `ip dhcp relay information trust-all` on relay router if Option 82 causes relay drops
+  - Rate-limit DHCP: `ip dhcp limit lease per-interface <n>` — caps leases per sub-interface
+- ⚙️ ARP Spoofing at Layer 3
+  - DAI handles ARP validation at L2 on switch → see DAI node
+  - On router: static ARP entries for critical hosts → `arp 192.168.1.1 aabb.cc00.1234 arpa`
+- ⚙️ SYN Flood / TCP Attack Mitigation
+  - TCP Intercept (older IOS — intercept mode): `ip tcp intercept list OUTSIDE_TCP`
+    - `ip access-list extended OUTSIDE_TCP` → `permit tcp any 192.168.0.0 0.0.255.255`
+    - `ip tcp intercept mode intercept` — router proxies TCP handshake, only forwards completed connections
+  - Watch mode (lighter): `ip tcp intercept mode watch` — monitors and resets incomplete connections
+- ⚙️ Control Plane Policing (CoPP)
+  - Protects the router CPU from floods targeting the control plane (OSPF, BGP, SSH, ICMP)
+  - `class-map match-any CP_ICMP` → `match protocol icmp`
+  - `class-map match-any CP_ROUTING` → `match protocol ospf` | `match protocol eigrp`
+  - `policy-map COPP_POLICY`
+  - `class CP_ICMP` → `police rate 512 kbps conform transmit exceed drop`
+  - `class CP_ROUTING` → `police rate 1000 kbps conform transmit exceed drop`
+  - Apply: `control-plane` → `service-policy input COPP_POLICY`
+- ⚙️ ICMP / Directed Broadcast
+  - Disable IP directed broadcasts (Smurf amplification): `no ip directed-broadcast` (default off IOS 12.x+)
+  - Rate-limit ICMP on WAN interface: `rate-limit input access-group 101 8000 1500 2000 conform-action transmit exceed-action drop`
+- ⚙️ Routing Protocol Security
+  - OSPF MD5 auth: `ip ospf message-digest-key 1 md5 <key>` + `ip ospf authentication message-digest`
+  - EIGRP MD5 auth: `ip authentication mode eigrp 100 md5` + `ip authentication key-chain eigrp 100 <chain>`
+  - Passive interfaces: `passive-interface default` → `no passive-interface <routing-int>` — see OSPF/EIGRP nodes
+- 🔍 Verification
+  - `show ip access-lists ANTI_SPOOF_IN` — hit counts on deny rules (confirms drops)
+  - `show ip verify unicast` — uRPF drop counters per interface
+  - `show ip tcp intercept` — intercepted and established sessions
+  - `show policy-map control-plane` — CoPP hit counters per class
+  - `show ip ospf neighbor` — confirm no unexpected neighbors (rogue router)
+- 🔧 Common Mistakes
+  - ⚠️ uRPF strict on asymmetric path → drops legitimate return traffic → use loose mode for multi-homed
+  - ⚠️ Anti-spoofing ACL applied outbound instead of inbound → spoofed packets processed before drop → always apply inbound on untrusted interface
+  - ⚠️ CoPP too aggressive → legitimate routing protocol packets dropped → tune rates per protocol with `show policy-map control-plane`
+  - ⚠️ OSPF/EIGRP no authentication → rogue router can inject false routes → always enable MD5 auth in production
+
 </script>
 </div>
 
