@@ -1,234 +1,27 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCNA Mindmap</title>
 <script src="https://cdn.jsdelivr.net/npm/markmap-autoloader@0.17"></script>
 <style>
-:root {
-  --toolbar-h: 56px;
-  --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-}
-
-html[data-theme="light"] {
-  --bg: #eef3f9;
-  --surface: rgba(255,255,255,0.92);
-  --surface-solid: #ffffff;
-  --surface-2: #f6f9fd;
-  --border: #d8e1ee;
-  --border-strong: #c5d1e3;
-  --text: #142033;
-  --text-soft: #52627b;
-  --accent: #4457d6;
-  --accent-soft: rgba(68,87,214,0.1);
-  --btn-bg: #f4f7fc;
-  --btn-border: #cfd9e8;
-  --btn-hover: #e9eff8;
-  --canvas: #fbfdff;
-  --node-text: #162235;
-  --node-secondary: #43546f;
-  --node-hover: rgba(68,87,214,0.08);
-  --root-fill: rgba(68,87,214,0.08);
-  --root-stroke: rgba(68,87,214,0.22);
-}
-
-html[data-theme="dark"] {
-  --bg: #111827;
-  --surface: rgba(20, 28, 45, 0.92);
-  --surface-solid: #172033;
-  --surface-2: #1d2940;
-  --border: #2c3a56;
-  --border-strong: #3a4b6d;
-  --text: #edf3ff;
-  --text-soft: #b6c5de;
-  --accent: #bcc7ff;
-  --accent-soft: rgba(188,199,255,0.12);
-  --btn-bg: #22304a;
-  --btn-border: #3b4d71;
-  --btn-hover: #2a3a59;
-  --canvas: #162031;
-  --node-text: #eef4ff;
-  --node-secondary: #c4d1e7;
-  --node-hover: rgba(255,255,255,0.07);
-  --root-fill: rgba(188,199,255,0.10);
-  --root-stroke: rgba(188,199,255,0.24);
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: var(--bg);
-  color: var(--text);
-  transition: background .2s ease, color .2s ease;
-}
-body {
-  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; background: #f5f7fb; }
 #toolbar {
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: 100;
-  height: var(--toolbar-h);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 0 18px;
-  background: var(--surface);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.02), var(--shadow);
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 40px;
+  background: #ffffff; border-bottom: 1px solid #d8e0ee;
+  display: flex; align-items: center; gap: 8px; padding: 0 16px;
 }
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.brand-mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent-soft);
-  border: 1px solid var(--root-stroke);
-  color: var(--accent);
-  font-size: 14px;
-  flex: 0 0 auto;
-}
-
-.brand-copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.brand-title {
-  font-size: 14px;
-  line-height: 1.1;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--text);
-}
-
-.brand-subtitle {
-  font-size: 11px;
-  line-height: 1.2;
-  font-weight: 500;
-  color: var(--text-soft);
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.theme-switch {
-  appearance: none;
-  border: 1px solid var(--btn-border);
-  background: var(--btn-bg);
-  color: var(--text);
-  border-radius: 999px;
-  height: 34px;
-  padding: 0 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, transform .05s ease;
-  font: 600 12px/1 Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-.theme-switch:hover {
-  background: var(--btn-hover);
-  border-color: var(--border-strong);
-}
-.theme-switch:active {
-  transform: scale(.985);
-}
-.theme-switch svg {
-  width: 14px;
-  height: 14px;
-  display: block;
-  color: var(--accent);
-}
-
-.markmap {
-  position: fixed;
-  inset: var(--toolbar-h) 0 0 0;
-}
-svg.markmap {
-  width: 100%;
-  height: 100%;
-  background: var(--canvas) !important;
-}
-
-svg.markmap .markmap-node > text {
-  fill: var(--node-secondary) !important;
-  font-weight: 520;
-}
-
-svg.markmap .markmap-node[data-depth="0"] > text {
-  fill: var(--text) !important;
-  font-weight: 780;
-}
-
-svg.markmap .markmap-node[data-depth="1"] > text {
-  font-weight: 700;
-}
-
-svg.markmap .markmap-node-bg {
-  fill: transparent !important;
-  rx: 8px;
-  ry: 8px;
-}
-
-svg.markmap .markmap-node:hover .markmap-node-bg {
-  fill: var(--node-hover) !important;
-}
-
-svg.markmap .markmap-node[data-depth="0"] > .markmap-node-bg {
-  fill: var(--root-fill) !important;
-  stroke: var(--root-stroke) !important;
-  stroke-width: 1;
-}
-
-svg.markmap circle {
-  transition: stroke .15s ease, fill .15s ease, stroke-width .15s ease;
-}
-
-@media (max-width: 720px) {
-  :root { --toolbar-h: 52px; }
-  #toolbar { padding: 0 12px; }
-  .brand-subtitle { display: none; }
-}
+#toolbar h1 { font-size: 14px; font-weight: 600; color: #5b4fd6; flex: 1; font-family: sans-serif; }
+.markmap { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
+svg.markmap { width: 100%; height: 100%; background: #fbfdff; }
 </style>
 </head>
 <body>
-<header id="toolbar">
-  <div class="brand">
-    <div class="brand-mark">⬡</div>
-    <div class="brand-copy">
-      <div class="brand-title">CCNA Mindmap</div>
-      <div class="brand-subtitle">Structured visual review map</div>
-    </div>
-  </div>
-  <div class="controls">
-    <button class="theme-switch" id="btn-theme" type="button" aria-label="Toggle color theme">
-      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.25a.75.75 0 0 1 .75.75v.7a.75.75 0 0 1-1.5 0V2A.75.75 0 0 1 8 1.25Zm0 11.55a.75.75 0 0 1 .75.75v.45a.75.75 0 0 1-1.5 0v-.45A.75.75 0 0 1 8 12.8ZM3.58 3.58a.75.75 0 0 1 1.06 0l.5.5a.75.75 0 1 1-1.06 1.06l-.5-.5a.75.75 0 0 1 0-1.06Zm7.28 7.28a.75.75 0 0 1 1.06 0l.5.5a.75.75 0 0 1-1.06 1.06l-.5-.5a.75.75 0 0 1 0-1.06ZM1.25 8A.75.75 0 0 1 2 7.25h.7a.75.75 0 0 1 0 1.5H2A.75.75 0 0 1 1.25 8Zm11.55 0a.75.75 0 0 1 .75-.75H14a.75.75 0 0 1 0 1.5h-.45A.75.75 0 0 1 12.8 8ZM4.08 10.86a.75.75 0 0 1 1.06 1.06l-.5.5a.75.75 0 1 1-1.06-1.06l.5-.5Zm7.84-7.84a.75.75 0 0 1 0 1.06l-.5.5a.75.75 0 0 1-1.06-1.06l.5-.5a.75.75 0 0 1 1.06 0ZM8 4.5A3.5 3.5 0 1 1 8 11.5 3.5 3.5 0 0 1 8 4.5Z"/></svg>
-      <span id="theme-label">Dark mode</span>
-    </button>
-  </div>
-</header>
+<div id="toolbar">
+  <h1>⬡ CCNA Mindmap</h1>
+</div>
 
 <div class="markmap">
 <script type="text/template">
@@ -1057,135 +850,12 @@ markmap:
 
 <script>
 window.addEventListener('load', () => {
-  const html = document.documentElement;
-  const themeBtn = document.getElementById('btn-theme');
-  const themeLabel = document.getElementById('theme-label');
-  const toolbarHeight = () => getComputedStyle(document.documentElement).getPropertyValue('--toolbar-h').trim();
-  let recolorTimer;
-
-  const palettes = {
-    light: ['#4B56D2', '#0F766E', '#B45309', '#BE185D', '#2563EB', '#6D28D9'],
-    dark:  ['#C2CCFF', '#7EE7D9', '#F8C58F', '#F6B4D4', '#A9CFFF', '#D0BCFF']
-  };
-
-  function setThemeButtonLabel() {
-    themeLabel.textContent = html.getAttribute('data-theme') === 'light' ? 'Dark mode' : 'Light mode';
-  }
-
-  function getTopBranch(node) {
-    let current = node;
-    while (current && current.parent && current.parent.depth > 0) current = current.parent;
-    return current && current.depth === 1 ? current : null;
-  }
-
-  function branchKey(node, index) {
-    return `${index}::${(node && (node.content || node.t || node.name || '')).toString()}`;
-  }
-
-  function recolorMap() {
-    const svg = document.querySelector('svg.markmap');
-    if (!svg) return;
-
-    const theme = html.getAttribute('data-theme') || 'light';
-    const styles = getComputedStyle(html);
-    svg.style.cssText = `position:fixed;top:${toolbarHeight()};left:0;width:100%;height:calc(100vh - ${toolbarHeight()});background:${styles.getPropertyValue('--canvas').trim()};`;
-
-    const palette = palettes[theme];
-    const root = svg.__data__;
-    const topBranches = Array.isArray(root?.children) ? root.children : [];
-    const branchColors = new Map(
-      topBranches.map((branch, index) => [branchKey(branch, index), palette[index % palette.length]])
-    );
-
-    const nodes = svg.querySelectorAll('g.markmap-node');
-    nodes.forEach((nodeEl) => {
-      const datum = nodeEl.__data__;
-      if (!datum) return;
-
-      const topBranch = getTopBranch(datum);
-      const branchIndex = topBranches.indexOf(topBranch);
-      const color = topBranch
-        ? branchColors.get(branchKey(topBranch, branchIndex))
-        : styles.getPropertyValue('--accent').trim();
-
-      const depth = Number(datum.depth || 0);
-      const circle = nodeEl.querySelector(':scope > circle');
-      const text = nodeEl.querySelector(':scope > text');
-      const bg = nodeEl.querySelector(':scope > .markmap-node-bg');
-
-      nodeEl.dataset.depth = String(depth);
-
-      if (circle) {
-        circle.setAttribute('stroke', color);
-        circle.setAttribute('fill', styles.getPropertyValue('--canvas').trim());
-        circle.setAttribute('stroke-width', depth <= 1 ? '2.1' : '1.65');
-      }
-
-      if (text) {
-        if (depth === 1) {
-          text.setAttribute('fill', color);
-        } else if (depth >= 2) {
-          text.setAttribute('fill', styles.getPropertyValue('--node-secondary').trim());
-        } else {
-          text.setAttribute('fill', styles.getPropertyValue('--text').trim());
-        }
-      }
-
-      if (bg) {
-        bg.setAttribute('rx', '8');
-        bg.setAttribute('ry', '8');
-      }
+  setTimeout(() => {
+    const svgs = document.querySelectorAll('svg.markmap');
+    svgs.forEach(s => {
+      s.style.cssText = 'position:fixed;top:40px;left:0;width:100%;height:calc(100vh - 40px);';
     });
-
-    const links = svg.querySelectorAll('path.markmap-link');
-    links.forEach((linkEl) => {
-      const datum = linkEl.__data__;
-      const target = datum?.target || datum?.data?.target || null;
-      const topBranch = target ? getTopBranch(target) : null;
-      const branchIndex = topBranches.indexOf(topBranch);
-      const color = topBranch
-        ? branchColors.get(branchKey(topBranch, branchIndex))
-        : styles.getPropertyValue('--text-soft').trim();
-
-      const targetDepth = Number(target?.depth || 0);
-      linkEl.setAttribute('stroke', color);
-      linkEl.setAttribute('stroke-opacity', theme === 'dark' ? '0.58' : '0.5');
-      linkEl.setAttribute('stroke-width', targetDepth <= 1 ? '2.3' : '1.85');
-    });
-  }
-
-  function scheduleRecolor(delay = 90) {
-    clearTimeout(recolorTimer);
-    recolorTimer = setTimeout(recolorMap, delay);
-  }
-
-  themeBtn.addEventListener('click', () => {
-    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    html.setAttribute('data-theme', next);
-    setThemeButtonLabel();
-    scheduleRecolor(40);
-  });
-
-  setThemeButtonLabel();
-  setTimeout(recolorMap, 700);
-  setTimeout(recolorMap, 1500);
-  setTimeout(recolorMap, 2500);
-
-  const observer = new MutationObserver((mutations) => {
-    const relevant = mutations.some((m) =>
-      m.type === 'childList' ||
-      (m.type === 'attributes' && ['transform', 'd', 'style'].includes(m.attributeName))
-    );
-    if (relevant) scheduleRecolor();
-  });
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['transform', 'd', 'style']
-  });
-
-  window.addEventListener('resize', () => scheduleRecolor(30));
+  }, 2000);
 });
 </script>
 </body>
