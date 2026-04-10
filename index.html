@@ -75,11 +75,19 @@ markmap:
   - ⚠️ Up/up but no traffic → duplex/speed mismatch → `show interfaces` → force settings
 
 ### Interfaces & Cables
-- 📖 Cable Standards
-  - UTP copper: RJ-45, IEEE 802.3, max 100m
-  - 10/100BASE-T: 2 pairs | 1000BASE-T/10GBASE-T: 4 pairs bidirectional
+- 📖 UTP Copper Categories
+  - CAT3: 10 Mbps | CAT4: 16 Mbps (token ring) | CAT5: 100 Mbps
+  - CAT5e: 1 Gbps | CAT6: 1 Gbps/100m, 10 Gbps/55m | CAT6a: 10 Gbps
+  - CAT7/7a: 10 Gbps / 25–40 Gbps | CAT8: 25–40 Gbps / 30–36m
+  - RJ-45 connector | max run 100m unless noted
   - Auto MDI-X: modern devices auto-detect straight-through vs crossover
-  - SMF: laser, up to 80km | MMF: LED, up to 550m, cheaper
+  - Unshielded Twisted Pair (UTP): no shielding, susceptible to interference
+- 📖 Fiber Optic
+  - Single-mode (SMF): laser-driven, 9µm core, up to 80km+ — WAN/data center
+  - Multimode (MMF): LED-driven, 50/62.5µm core, up to 550m — campus/LAN
+- 📖 Tx / Rx Pin Assignments
+  - Router, NGFW, Server, Endpoint: Tx=1,2 | Rx=3,6
+  - Switch: Tx=3,6 | Rx=1,2 (opposite → straight-through cable between host and switch)
 - 🔗 OSI Layer: Layer 1 (Physical)
 - ⚙️ Commands
   - `speed 1000` + `duplex full` on interface
@@ -154,14 +162,55 @@ markmap:
 
 ### Wireless Principles
 - 📖 Key Concepts
+  - Half-duplex: devices take turns — only one transmits at a time
+  - CSMA/CA: Carrier Sense Multiple Access / Collision Avoidance (not CSMA/CD)
+  - SSID: human-readable network name | BSSID: AP's MAC address
+  - Site surveys required before deployment for coverage planning
   - 2.4 GHz: better range/penetration, congested, non-overlapping channels: 1, 6, 11
   - 5 GHz: more non-overlapping channels, less congestion, shorter range
-  - SSID: human-readable network name | CSMA/CA: collision avoidance
-  - WPA2 (CCMP/AES) current | WPA3 (GCMP/AES) latest
+- 📖 802.11 Standards
+  - 802.11n (Wi-Fi 4): 54–600 Mbps | 2.4 or 5 GHz
+  - 802.11ac (Wi-Fi 5): up to 3.5 Gbps | 5 GHz only
+  - 802.11ax (Wi-Fi 6): up to 9.6 Gbps | 2.4, 5, 6 GHz
+  - 802.11ay (Wi-Fi 6E): up to 20 Gbps | 60 GHz
+- 📖 Wireless Network Types
+  - WPAN: Personal Area Network — Bluetooth, ~10m
+  - WLAN: Local Area Network — 802.11 AP, ~100m campus
+  - WMAN: Metropolitan Area Network — large city coverage
+  - BSS (Basic Service Set): single AP + associated clients
+  - BSSID: MAC-based unique ID per AP | BSA: physical coverage area
+  - Distribution System: connects AP to wired network
+  - Wi-Fi Direct: device connects to AP AND forms PPP wireless network — no Ad Hoc/IBSS
 - 🔗 OSI Layer: L1 (Physical) and L2 (Data Link)
 - 🔧 Troubleshooting
   - ⚠️ Poor signal → channel overlap → use analyzer → change to non-overlapping channel
   - ⚠️ Connects but no internet → DHCP not reachable → check VLAN tag on trunk
+
+### Life of a Packet
+- 📖 Process — what happens when a client sends HTTP to a server
+  - Step 1 — DNS: client resolves FQDN → IP via DNS (UDP 53)
+    - Check local hosts file first, then DNS cache, then DNS server query
+  - Step 2 — ARP: client needs MAC of default gateway (not server!)
+    - Sends ARP broadcast: "Who has 192.168.1.1?"
+    - Gateway replies with its MAC → client caches entry
+  - Step 3 — TCP 3-way handshake: SYN → SYN-ACK → ACK
+  - Step 4 — HTTP GET request sent → server responds → TCP teardown
+  - Key insight: destination MAC changes at each hop, destination IP stays same
+- 📖 ARP
+  - Resolves IP → MAC address for L2 forwarding
+  - Broadcast to FF:FF:FF:FF:FF:FF within broadcast domain
+  - Reply is unicast back to requester
+  - Windows: `arp -a` (view) | `netsh interface ip delete arpcache` (clear)
+  - Linux: `arp -n` (view) | `ip -s -s neigh flush all` (clear)
+  - Cisco: `show arp` (view) | `clear arp-cache` (clear)
+- 📖 DNS on Cisco IOS
+  - `ip domain-lookup` — enable DNS lookup (on by default)
+  - `ip name-server 8.8.8.8` — set DNS server
+  - `ip domain-name company.local` — append domain for short names
+  - `ip dns server` — make router act as DNS server
+  - `ip host R2 10.0.0.2` — static hostname entry
+  - Windows: `nslookup google.com` | `ipconfig /displaydns` | `ipconfig /flushdns`
+- 🔗 OSI Layer: ARP=L2, DNS=L7, IP forwarding=L3
 
 ### Virtualization Fundamentals
 - 📖 Types
@@ -175,6 +224,113 @@ markmap:
   - [IOS-XR] `vrf CUST_A` → interface: `vrf CUST_A` → `ipv4 address ...`
 - 🔍 Verification
   - `show ip vrf` | `show ip route vrf CUST_A` | `ping vrf CUST_A 10.1.1.2`
+
+### Device Management & Boot Process
+- 📖 Boot Order
+  - ROM (Read-Only Memory): powered on → loads POST and bootstrap from ROM first
+  - Flash: system loads first IOS image found in Flash (override with `boot system`)
+  - NVRAM (Non-Volatile RAM): loads startup-config after IOS loads
+  - RAM (Volatile): running-config lives here — lost on power cycle
+- 📖 Key Commands
+  - `show flash:` — list IOS images in flash
+  - `show version` — current IOS, uptime, boot source
+  - `show running-config` | `show startup-config`
+  - `copy running-config startup-config` (or `write memory`) — save config
+- ⚙️ Backup & Restore
+  - `copy tftp flash` — download IOS image from TFTP server
+  - `copy flash tftp` — backup IOS image to TFTP server
+  - `copy running-config tftp` — backup config to TFTP
+  - `copy startup-config usb` — backup config to USB
+  - `boot system flash <filename>` → `write memory` → `reload` — upgrade IOS
+- ⚙️ Factory Reset
+  - `write erase` — erase startup-config
+  - `config-register 0x2100` — boot to ROMMON
+  - In ROMMON: `confreg 0x0` (ignore startup-config) → `reset`
+  - Restore normal boot: `confreg 0x2102` → `reset`
+- 📖 VLAN Database
+  - Stored in vlan.dat in flash (Cisco) — separate from startup-config
+  - Survives `write erase` — must delete vlan.dat to fully reset VLANs
+- 🔍 Verification
+  - `show flash:` | `show version` | `show boot`
+- 🔧 Troubleshooting
+  - ⚠️ Router boots to ROMMON → IOS image missing or corrupt → `copy tftp flash` from ROMMON
+  - ⚠️ Config lost after reload → forgot `copy run start` → config lives in RAM only
+
+### Troubleshooting Methodology
+- 📖 Structured Approach (top-down or bottom-up per OSI)
+  - Compare configurations (show run both sides)
+  - Trace path (traceroute)
+  - Test reachability (ping)
+  - Swap components if hardware suspected
+- 📖 Per-Layer Commands
+  - L1 Physical: `show ip int brief` (line/protocol) | `show interfaces` (errors, CRC, collisions)
+  - L2 Data Link: `show mac address-table` | `show arp` | `show spanning-tree`
+  - L3 Network: `show ip route` | `ping <ip>` | `traceroute <ip>`
+  - L4 Transport: `telnet <ip> <port>` — test TCP port connectivity
+  - DNS: `ping <fqdn>` — if ping by IP works but FQDN fails → DNS problem
+- 📖 Useful Windows Commands
+  - `ipconfig /all` — IP, mask, gateway, DNS, MAC
+  - `ipconfig /release` + `/renew` — get new DHCP lease
+  - `netstat -an` — active TCP/UDP connections and listening ports
+  - `tracert <ip>` — hop-by-hop path
+  - `nslookup <fqdn>` — DNS resolution test
+- 🔧 Common Patterns
+  - ⚠️ Ping same subnet fails → ARP issue or VLAN mismatch → `show mac address-table`
+  - ⚠️ Ping gateway works, remote fails → routing issue → `show ip route` on both ends
+  - ⚠️ All pings fail from device → default gateway missing → `ip default-gateway <ip>` on switch
+
+### Network Topology Architectures
+- 📖 Campus LAN Design (3-Tier)
+  - Access Layer: switches for endpoints — PoE, port security, VLANs
+  - Distribution Layer: switch pairs for redundancy, QoS, inter-VLAN routing, STP root
+  - Core Layer: switch pairs for high-speed backbone — no policy, no end users
+  - Small networks collapse Distribution + Core into one (2-Tier / Collapsed Core)
+- 📖 Data Center Design
+  - Spine-Leaf (2-Tier): every Leaf switch connects to every Spine switch
+    - East-West traffic (server-to-server) — consistent 1-hop latency
+    - Spine = backbone (L3), Leaf = access (L2/L3 boundary)
+    - Contrast: 3-Tier is North-South (client-to-server)
+- 📖 WAN / Remote
+  - WAN: connects multiple LANs across cities/countries
+  - SOHO: router + few switches — simplified, often single ISP connection
+  - On-Premises: local servers and infrastructure
+  - Cloud: remote services (IaaS/PaaS/SaaS) — see Cloud Computing node
+- 📖 Other
+  - PAN: Personal Area Network — Bluetooth, ~10m
+  - MAN: Metropolitan Area Network — one geographic city
+- 🔗 OSI Layer: All layers — physical topology is L1; logical is L2/L3
+
+### Cloud Computing
+- 📖 Essential Characteristics
+  - On-demand self-service: provision without human interaction
+  - Broad access: available over network via standard mechanisms
+  - Resource pooling: customers share underlying hardware (multi-tenancy)
+  - Rapid elasticity / scalability: scale up or down on demand
+  - Measured service: pay-as-you-go
+- 📖 Service Models
+  - IaaS (Infrastructure as a Service)
+    - Provider manages: facility, network, storage, compute, hypervisor
+    - Customer manages: OS, apps, data
+    - Example: AWS EC2, Azure VM
+  - PaaS (Platform as a Service)
+    - Provider manages: IaaS + OS + custom runtime environment
+    - Customer manages: apps, data
+    - Example: AWS Elastic Beanstalk, Google App Engine
+  - SaaS (Software as a Service)
+    - Provider manages everything | Customer manages: data only
+    - Example: Office 365, Salesforce, Gmail
+- 📖 Deployment Models
+  - Public: open to general public — shared infrastructure
+  - Private: dedicated to one organization — on-prem or hosted
+  - Hybrid: private for main site, public for DR / burst capacity
+  - Community: two or more organizations pool resources to create shared cloud
+- 📖 Virtualization
+  - Hypervisor: software that manages VMs
+    - Type 1 (bare-metal): runs directly on hardware — VMware ESXi, Hyper-V
+    - Type 2 (hosted): runs on top of host OS — VMware Workstation, VirtualBox
+  - Containers: software packages running app/microservice, share host OS kernel — Docker
+  - Clustering: combining multiple physical systems into one virtual system
+- 🔗 OSI Layer: Infrastructure level — not tied to specific OSI layer
 
 ---
 
@@ -220,6 +376,33 @@ markmap:
   - ⚠️ VLAN not active on trunk → VLAN not created locally → `vlan <id>`
   - ⚠️ Trunk not forming → force both sides `switchport mode trunk`
 
+### VTP (VLAN Trunking Protocol)
+- 📖 Allows adding, editing, deleting VLANs from a central VTP Server
+  - VTP Server: can add/edit/delete VLANs — propagates to clients in domain
+  - VTP Client: syncs VLAN database from server — cannot add/edit/delete
+  - VTP Transparent: does NOT learn from domain, but can add/edit/delete locally
+  - VTP Off: does not participate at all
+  - ⚠️ Security risk: a new switch with higher revision number can wipe VLAN DB
+    - Best practice: use `vtp mode transparent` or `vtp mode off` in production
+- 📖 DTP (Dynamic Trunking Protocol)
+  - Two Cisco switches cabled together can auto-negotiate a trunk
+  - `switchport mode dynamic auto`: forms trunk only if neighbor is negotiating (default newer)
+  - `switchport mode dynamic desirable`: actively tries to negotiate trunk
+  - `switchport nonegotiate`: disables DTP — always use on production trunk ports
+- 🔗 OSI Layer: Layer 2 (Data Link)
+- ⚙️ Commands
+  - `vtp domain company` — set VTP domain name (must match on all switches)
+  - `vtp mode server` | `vtp mode client` | `vtp mode transparent` | `vtp mode off`
+  - `vtp password <secret>` — optional authentication
+  - `vlan 20` → `name FINANCE` — add VLAN (on server or transparent)
+- 🔍 Verification
+  - `show vtp status` — mode, domain, revision number, VLANs
+  - `show vlan brief` — confirm VLANs synced
+- 🔧 Troubleshooting
+  - ⚠️ VLANs not propagating → domain name mismatch → `vtp domain <same-name>` both sides
+  - ⚠️ New switch wiped VLAN DB → higher revision number injected → set `vtp mode transparent` first
+  - ⚠️ VTP Client can't add VLAN → by design → change to transparent or make it server
+
 ### Spanning Tree Protocol
 - 📖 Prevents L2 loops by blocking redundant ports
   - Root Bridge: lowest Bridge ID (priority + MAC) — all ports Designated/Forwarding
@@ -236,8 +419,21 @@ markmap:
   - PortFast: `spanning-tree portfast` (per-port) or `spanning-tree portfast default`
   - BPDU Guard: `spanning-tree bpduguard enable` (per-port) or `spanning-tree portfast bpduguard default`
   - Mode: `spanning-tree mode rapid-pvst`
+  - Root Guard (distribution-to-access uplinks): `spanning-tree guard root`
+    - Prevents rogue switches from becoming Root Bridge — see L2 Security node
+  - Loop Guard (Root/Alternate ports): `spanning-tree guard loop` (per-interface)
+    - Global: `spanning-tree loopguard default`
+    - Prevents unidirectional link problem (port stays up but passes no traffic)
+  - BPDU Filter: similar to BPDU Guard but does NOT err-disable
+    - Global (PortFast ports only): `spanning-tree portfast bpdufilter default`
+    - Interface: stops sending AND ignores incoming BPDUs
+  - Path cost method: `spanning-tree pathcost method long` (32-bit, ref = 20 Tbps)
+    - Default short-mode (16-bit) uses 20 Gbps reference → all Gigabit = cost 1 (not granular)
+  - STP variants: 802.1D (original) | PVST+ (Cisco, per-VLAN) | 802.1w RSTP |
+    Rapid-PVST+ (Cisco default) | 802.1s MST (groups VLANs — supports load balancing)
 - 🔍 Verification
   - `show spanning-tree` | `show spanning-tree vlan 10` | `show spanning-tree summary`
+  - `show spanning-tree pathcost method`
 - 🔧 Troubleshooting
   - ⚠️ Broadcast storm → L2 loop → `show spanning-tree` → disable offending port immediately
   - ⚠️ Port stuck in BLK → wrong Root Bridge → manually configure correct root
@@ -355,6 +551,33 @@ markmap:
   - ⚠️ Legit ARP dropped → static IP host not in snooping table → create ARP ACL
   - ⚠️ Port err-disabled from ARP rate → adjust rate or `errdisable recovery cause arp-inspection`
 
+### 802.1X — Identity-Based Network Access
+- 📖 Only authentication traffic (EAP) is allowed on a switchport until device authenticates
+  - Three roles: Supplicant (client device), Authenticator (switch), Authentication Server (RADIUS)
+  - Port is in unauthorized state until RADIUS approves → then opens for normal traffic
+  - Integrates with AAA — see AAA node
+  - Used for wired and wireless (WPA Enterprise) access control
+- 📖 Port States
+  - Unauthorized: only EAP/802.1X frames pass — all other traffic blocked
+  - Authorized: normal traffic permitted after successful authentication
+  - Guest VLAN: unauthenticated hosts can land in limited-access VLAN
+  - Auth-fail VLAN: hosts that fail auth placed in restricted VLAN
+- 🔗 OSI Layer: Layer 2 (Data Link)
+- 📋 Prerequisites: RADIUS server reachable. `aaa new-model` configured
+- ⚙️ Commands
+  - `aaa new-model`
+  - `radius-server host 10.1.1.200 key RadKey`
+  - `aaa authentication dot1x default group radius`
+  - `dot1x system-auth-control` (global enable)
+  - Interface: `authentication port-control auto` → `dot1x pae authenticator`
+  - Guest VLAN: `authentication event fail action authorize vlan <id>`
+- 🔍 Verification
+  - `show dot1x all` — all 802.1X enabled interfaces and states
+  - `show authentication sessions` — per-interface auth state and identity
+- 🔧 Troubleshooting
+  - ⚠️ Port stays unauthorized → RADIUS unreachable → `ping <radius-ip>` → check firewall UDP 1812
+  - ⚠️ Printer/dumb device fails → no supplicant → use MAC Authentication Bypass (MAB)
+
 ---
 
 ## 3. IP Connectivity
@@ -366,8 +589,9 @@ markmap:
   - Tie → lowest metric (cost/hop count/bandwidth)
   - Default route: 0.0.0.0/0 = Gateway of Last Resort
   - Route codes: C=Connected, L=Local, S=Static, O=OSPF, D=EIGRP, R=RIP
-- 📖 Administrative Distance (memorize)
-  - Connected=0, Static=1, EIGRP Int=90, OSPF=110, RIP=120, EIGRP Ext=170, Unusable=255
+- 📖 Administrative Distance (memorize — lower = more preferred)
+  - Connected=0, Static=1, External BGP=20, EIGRP Internal=90, OSPF=110
+  - IS-IS=115, RIP=120, EIGRP External=170, Internal BGP=200, Unusable=255
 - 🔗 OSI Layer: Layer 3 (Network)
 - 🔍 Verification
   - `show ip route` | `show ip route 10.1.1.0` | `show ip route summary` | `show ip protocols`
@@ -404,6 +628,25 @@ markmap:
   - Timers: Hello=10s, Dead=40s (Ethernet)
 - 📖 Neighbor states: Down → Init → 2-Way → ExStart → Exchange → Loading → Full
 - 🔗 OSI Layer: L3, IP protocol 89, multicast 224.0.0.5 / 224.0.0.6
+- 📖 OSPF Router Types
+  - Backbone Router: has interface in Area 0 — maintains full LSDB for Area 0
+  - Internal Router: all interfaces in same area
+  - ABR (Area Border Router): interfaces in multiple areas — max 2 areas recommended
+    - Summarization: `area <id> range <ip> <mask>` (summarize into backbone)
+  - ASBR (Autonomous System Boundary Router): redistributes external routes into OSPF
+  - DR / BDR (Designated / Backup Designated Router): elected on broadcast segments (not P2P)
+    - Higher OSPF priority wins (default 1 | range 0–255 | 0 = never DR)
+    - Tie → highest Router ID wins
+    - Uses 224.0.0.6 for DR/BDR communication | 224.0.0.5 for all OSPF routers
+- 📖 LSA Types
+  - Type 1 (Router LSA): generated by every router — local link info
+  - Type 2 (Network LSA): generated by DR — multiaccess segment info
+  - Type 3 (Summary LSA): generated by ABR — inter-area routes
+  - Type 4 (ASBR Summary LSA): location of ASBR
+  - Type 5 (AS External LSA): external routes redistributed by ASBR
+- 📖 OSPF Packet Types
+  - 1=Hello, 2=DBD (Database Descriptor), 3=LSR (Link State Request)
+  - 4=LSU (Link State Update), 5=LSAck (Link State Acknowledgment)
 - 📋 Prerequisites: Area#, Hello/Dead timers, subnet, MTU, network type, unique RIDs must all match
 - ⚙️ Commands [IOS/IOS-XE]
   - `router ospf 1` → `router-id 1.1.1.1`
@@ -442,6 +685,73 @@ markmap:
   - ⚠️ Neighbor not forming → AS number mismatch → verify both sides match
   - ⚠️ Neighbor up, routes missing → `auto-summary` summarizing wrong → `no auto-summary`
   - ⚠️ Stuck in Active (SIA) → query timeout → summarize routes to limit query scope
+
+### RIP (Routing Information Protocol)
+- 📖 Distance-vector IGP — oldest, simple, limited
+  - Metric: hop count only (max 15 hops — 16 = unreachable)
+  - RIPv1: classful, sends broadcast updates — legacy, avoid
+  - RIPv2: classless, sends multicast updates (224.0.0.9), supports VLSM
+  - AD = 120 | slow convergence (30s updates, 180s timeout)
+  - Use case: small/lab networks only — EIGRP or OSPF preferred in production
+- 🔗 OSI Layer: L3, UDP port 520
+- ⚙️ Commands
+  - `router rip` → `version 2` → `no auto-summary`
+  - `network 10.0.0.0` — advertise connected networks (classful, no mask)
+  - `passive-interface GigabitEthernet0/1` — stop sending RIP updates on LAN
+  - `default-information originate` — advertise default route into RIP
+- 🔍 Verification
+  - `show ip rip database` — RIP topology table
+  - `debug ip rip` — live RIP updates (use carefully!) | `undebug all` to stop
+- 🔧 Troubleshooting
+  - ⚠️ Routes not appearing → network statement doesn't match interface → check classful boundary
+  - ⚠️ Route loops → max hop count exceeded → 16 hops = infinity in RIP
+
+### BGP (Border Gateway Protocol)
+- 📖 EGP — routes between autonomous systems (organizations/ISPs)
+  - Path-vector protocol — uses AS path, not metrics, to select best path
+  - eBGP: between different ASes | iBGP: within same AS
+  - External BGP AD = 20 | Internal BGP AD = 200
+  - Highly scalable — runs the entire internet routing table
+  - TCP port 179 — requires explicit neighbor configuration (no auto-discovery)
+  - Best path selection: prefer shortest AS path, then various tie-breakers
+- 🔗 OSI Layer: L3, TCP 179
+- ⚙️ Commands (brief — BGP config is beyond CCNA scope)
+  - `router bgp <AS-number>` → `neighbor <ip> remote-as <peer-AS>`
+  - `network <ip> mask <mask>` — advertise specific prefix into BGP
+- 🔍 Verification
+  - `show ip bgp summary` — neighbor states (Established = working)
+  - `show ip bgp` — full BGP table
+- 🔧 Troubleshooting
+  - ⚠️ BGP neighbor stuck in Active → TCP 179 blocked → check ACL and routing to peer
+  - ⚠️ Routes not received → no `network` statement or wrong AS number
+
+### IS-IS (Intermediate System to Intermediate System)
+- 📖 Link-state IGP — used primarily by ISPs and large carriers
+  - Operates directly over Layer 2 (not IP) — immune to IP routing issues
+  - Uses levels instead of areas: Level 1 (intra-area), Level 2 (backbone/inter-area)
+  - Supports both IPv4 and IPv6 natively (multi-topology)
+  - AD = 115 (slightly preferred over OSPF at 110 — ISP standard)
+  - Cisco SD-Access uses IS-IS as the underlay routing protocol
+- 🔗 OSI Layer: L2 (directly, no IP encapsulation)
+- ⚙️ Commands (brief)
+  - `router isis` → `net <NET-address>` → `is-type level-2-only`
+  - Interface: `ip router isis` (enable IS-IS on interface)
+
+### Loopback Interface
+- 📖 Virtual software interface — always up as long as router is running
+  - Never tied to physical hardware — never goes down due to cable/SFP failures
+  - Best practice: use loopback IP as OSPF/EIGRP Router ID — ensures stability
+  - Used for management access (SSH to loopback is always reachable via any path)
+  - Used for BGP peering (stable source IP)
+  - Loopbacks are /32 by default — advertise with exact /32 mask
+- 🔗 OSI Layer: L3 (purely software)
+- ⚙️ Commands
+  - `interface loopback 0` → `ip address 1.1.1.1 255.255.255.255`
+  - `no shutdown` not needed — always up
+  - OSPF: `router ospf 1` → `router-id 1.1.1.1` (use loopback IP)
+- 🔍 Verification
+  - `show ip interface brief` — loopback shows as up/up permanently
+  - `show ip route` — loopback appears as Local (L) route
 
 ### Inter-VLAN Routing
 - 📖 Layer 2 switches cannot route between VLANs — two main options
@@ -679,6 +989,58 @@ markmap:
   - ⚠️ TFTP fails → server unreachable or wrong filename → `ping <server>`
   - ⚠️ Not enough flash → `delete flash:<old-image>` → `squeeze flash:`
 
+### WAN Technologies
+- 📖 WAN Connectivity Options
+  - Leased Line: fixed dedicated bandwidth | physical serial connection between two locations
+    - T-series (North America): T1=1.544 Mbps, T3=44.7 Mbps | E-series (Europe)
+    - Uses serial ports — `show controllers <serial>` to find DTE/DCE
+    - `clock rate` configured on DCE side
+  - MPLS (Multiprotocol Label Switching):
+    - Operated by ISP — shared core infrastructure
+    - CE (Customer Edge) routers do NOT run MPLS — connected to PE (Provider Edge)
+    - Supports full mesh between sites via single ISP cloud
+    - VPLS: Multipoint Layer 2 VPN | VPWS: Point-to-Point Layer 2 VPN
+  - Satellite: high latency (500–700ms) | used in remote/rural areas
+  - Optical Fiber WAN:
+    - SONET (North America) and SDH (international): optical fiber standards
+    - DWDM (Dense Wavelength Division Multiplexing): combines multiple optical signals
+      over single fiber — massively increases capacity
+  - DSL (Digital Subscriber Line):
+    - PPPoE (PPP over Ethernet): encapsulates PPP frames inside Ethernet frames
+    - Used for DSL broadband — ISP authenticates via PPPoE session
+  - Internet: public internet with VPN overlay (IPsec) — lowest cost WAN option
+- 📖 VPN Types Summary
+  - Site-to-Site IPsec: both sides have static IPs | no client software needed
+  - Remote Access VPN (Cisco AnyConnect): TLS or IPsec | software on endpoint
+    - Split Tunneling: corporate traffic through VPN, internet traffic goes direct
+  - IPsec Tunnel: open standard | unicast only | no multicast
+  - GRE over IPsec: adds multicast/broadcast support (enables OSPF over VPN)
+  - IPsec VTI (Virtual Tunnel Interface): Cisco only | supports multicast
+  - DMVPN: Cisco only | hub enables dynamic full-mesh spoke-to-spoke connectivity
+  - FlexVPN: updated DMVPN using IKEv2 | more flexible
+  - GETVPN: Cisco only | centralized policy VPN over MPLS (non-public infrastructure)
+- 📖 Site-to-Site IPsec Configuration Steps
+  - Phase 1 (ISAKMP) — establish secure management channel
+    - `crypto isakmp policy 1` → `encr aes` → `hash sha256` → `authentication pre-share`
+    - `group 2` → `lifetime 86400`
+    - `crypto isakmp key <secret> address <peer-ip>`
+  - Define interesting traffic (ACL matching traffic to encrypt)
+  - Phase 2 (IPsec) — protect data traffic
+    - `crypto ipsec transform-set <name> esp-aes esp-sha256-hmac`
+    - `crypto map <name> 10 ipsec-isakmp` → `set peer <peer-ip>` → `set transform-set <name>`
+    - `match address <acl>` (interesting traffic ACL from Phase 1)
+  - Apply crypto map to interface: `interface <WAN>` → `crypto map <name>`
+  - Exclude VPN traffic from NAT ACL (deny VPN subnet from being NATted)
+- 🔗 OSI Layer: L3 (IP), L2 (MPLS data plane)
+- 🔍 Verification
+  - `show crypto isakmp sa` — Phase 1 SA state (MM_ACTIVE = working)
+  - `show crypto ipsec sa` — Phase 2 SA + encrypted packet counts
+  - `show interfaces serial <id>` — leased line status
+- 🔧 Troubleshooting
+  - ⚠️ ISAKMP SA not forming → mismatched policy (encr/hash/group) → compare both sides
+  - ⚠️ IPsec SA not forming → ACL mismatch (interesting traffic) → must mirror each other exactly
+  - ⚠️ VPN up but NAT translating VPN traffic → NAT ACL not excluding VPN subnets → fix NAT ACL
+
 ---
 
 ## 5. Security Fundamentals
@@ -696,11 +1058,23 @@ markmap:
   - Reflection/Amplification: spoofed source IP → large response floods target
   - Social Engineering: phishing, vishing, smishing, tailgating, watering hole
   - Malware: Virus (host required), Worm (self-propagating), Trojan (disguised as legit)
+- 📖 Firewall Types
+  - Packet Filter (ACL): stateless, L3/L4 — checks IP/port, no connection tracking, one direction
+  - Stateful Firewall: maintains connection table — tracks TCP state, allows return traffic automatically
+  - Next-Generation Firewall (NGFW): application-level DPI, IPS, user-based security, URL filtering
+- 📖 Additional Attack Types
+  - Buffer Overflow: sends malformed/oversized data to exploit memory boundaries → code execution
+  - PKI (Public Key Infrastructure): uses Certificate Authority (CA) to issue/validate digital certs
+    - Certificates bind public key to identity — used for HTTPS, IPsec, 802.1X (EAP-TLS)
+    - At least 768-bit RSA key required for SSH encryption on IOS (2048-bit recommended)
 - ⚙️ Device Hardening
   - `service password-encryption` — Type 7 (weak but better than plaintext)
   - `enable secret SecureP@ss123` — Type 5 MD5 (always use for privileged access)
+  - Never use `enable password` — not hashed
   - Disable unused interfaces: `shutdown` + add description
+  - `no ip http server` | `no ip http secure-server` if web GUI not needed
   - `no cdp run` / `no cdp enable` on untrusted external-facing ports
+  - `no service tcp-small-servers` | `no service udp-small-servers` | `no ip finger`
   - VTY ACL: `access-class <acl> in` on VTY lines
   - `exec-timeout 5 0` on console and VTY lines
 
@@ -797,11 +1171,35 @@ markmap:
   - Control Plane: builds routing/MAC/ARP/STP tables — CPU processed
   - Management Plane: SSH, SNMP, Syslog, NTP — device management traffic
 - 📖 SDN Architecture
-  - Centralizes Control Plane into a software controller
-  - Southbound Interface (SBI): controller → devices (NETCONF, RESTCONF, OpenFlow, OpFlex)
-  - Northbound Interface (NBI): apps/scripts → controller (REST API)
-  - Cisco SD-Access: DNA Center + IS-IS underlay + VXLAN/LISP overlay
-  - SD-Access node roles: Edge (end hosts), Border (WAN/external), Control (LISP mapping)
+  - Application Layer: network services, utilities, and applications
+  - Control Layer: determines how traffic should flow — centralized intelligence
+  - Infrastructure Layer (Data Plane): physical network devices — switches, routers
+  - Northbound APIs (NBI): REST — app layer to controller
+  - Southbound APIs (SBI): NETCONF, RESTCONF, SSH, OpenFlow, OpFlex — controller to devices
+- 📖 Cisco SDN Controllers
+  - APIC (Application Policy Infrastructure Controller): for ACI data center fabric
+  - Catalyst Center (formerly DNA Center): campus SDN — Intent-Based Networking
+    - Enables QoS, policy, automation, and assurance from central GUI
+    - Tabs: Design → Provision → Policy → Assurance
+  - ISE (Identity Services Engine): identity and policy — integrates with SD-Access
+- 📖 Cisco SD-Access
+  - Traffic flow based on identity (ISE + Catalyst Center)
+  - Underlay: physical IS-IS routed network (all L3 links, no STP loops)
+  - Overlay: VXLAN (data plane through tunnels) + LISP (control plane for location/ID)
+  - Cisco TrustSec: policy enforcement via SGT (Security Group Tags)
+  - Node roles: Edge (end hosts), Border (WAN/external), Control (LISP mapping)
+- 📖 SD-WAN Architecture
+  - SD-WAN Edge (Data Plane): branch/remote/cloud — uses IPsec tunnels
+  - SD-WAN Orchestrator/Validator: oversees traffic, applies policy — deployed in DMZ with public IP
+  - SD-WAN Controller (Control Plane): monitoring dashboard
+  - SD-WAN Manager: centralized configuration, alerting — runs as VM
+  - BFD (Bidirectional Forwarding Detection): detects if a tunnel goes down
+  - Horizontal Scaling: add more SD-WAN edges without redesigning core
+- 📖 AI/ML in Networking
+  - ML analyzes large network datasets and learns normal traffic patterns
+  - AI detects and reports anomalies (unusual traffic, potential attacks)
+  - Predictive AI: proactive network monitoring — predict failures before they happen
+  - Generative AI: assist with config generation, troubleshooting, documentation
 - 🔗 OSI Layer: All layers
 - ⚙️ Enable RESTCONF [IOS-XE]
   - `ip http secure-server` → `restconf` → `netconf-yang`
@@ -823,6 +1221,30 @@ markmap:
 - 🔧 Troubleshooting
   - ⚠️ 401 Unauthorized → wrong credentials or expired token → re-authenticate
   - ⚠️ 404 Not Found → wrong URI or wrong API version → check documentation
+
+### NETCONF and RESTCONF
+- 📖 NETCONF — replacement for SNMP for device configuration
+  - Protocol: XML encoding | Transport: SSH (port 830) or TLS
+  - Works with YANG data models — structured config and state data
+  - Operations: get, get-config, edit-config, copy-config, delete-config, commit
+  - Candidate datastore: stage changes before committing (unlike SNMP)
+  - Uses RPC (Remote Procedure Call) messages in XML
+- 📖 RESTCONF — REST interface mapped on top of NETCONF/YANG
+  - Builds on NETCONF: maps YANG models to a RESTful API
+  - Encoding: XML or JSON | Transport: HTTPS
+  - HTTP methods: GET=read, POST=create, PUT=replace, PATCH=modify, DELETE=remove
+  - Easier to work with than NETCONF (standard REST tools work: curl, Postman)
+- 📖 NETCONF vs RESTCONF vs SNMP
+  - SNMP: monitoring/read → NETCONF: configuration management → RESTCONF: easier REST-based config
+  - NETCONF/RESTCONF both use YANG models for consistency
+- 🔗 OSI Layer: Layer 7 (Application). NETCONF=TCP 830, RESTCONF=HTTPS 443
+- ⚙️ Enable on IOS-XE
+  - `ip http secure-server` → `netconf-yang` → `restconf`
+  - NETCONF SSH: `netconf ssh` (uses port 830)
+- 🔍 Verification
+  - `show netconf-yang status` — NETCONF enabled and sessions
+  - `show restconf` — RESTCONF status
+  - Test RESTCONF: `curl -u admin:pass https://<router>/restapi/data/ietf-interfaces:interfaces`
 
 ### JSON, XML, and YAML
 - 📖 JSON (JavaScript Object Notation)
@@ -851,10 +1273,19 @@ markmap:
 - 📖 Chef
   - Agent-based, pull model, TCP 10002
   - Files: Resources → Recipes → Cookbooks → Run-List, Ruby DSL
+- 📖 Terraform (HashiCorp) — Infrastructure as Code
+  - Agentless, push model, immutable by default (replaces instead of modifies)
+  - Communicates via REST, NETCONF, SSH, SNMP — cloud-provider APIs
+  - Language: HCL (HashiCorp Configuration Language) or JSON
+  - Files: .tf config files, State file (tracks deployed infra), Providers (plug-ins)
+  - Lifecycle management: plan → apply → destroy
+  - Use case: provision infrastructure (VMs, networks, cloud resources)
+  - Contrast with Ansible: Ansible = configuration management, Terraform = infrastructure provisioning
 - 📖 Quick Comparison (memorize)
-  - Ansible: agentless + push model + SSH
-  - Puppet: agent-based + pull model + TCP 8140
-  - Chef: agent-based + pull model + TCP 10002
+  - Ansible: agentless + push model + SSH + YAML + mutable
+  - Puppet: agent-based + pull model + TCP 8140 + Ruby DSL
+  - Chef: agent-based + pull model + TCP 10002 + Ruby DSL
+  - Terraform: agentless + push model + REST/NETCONF + HCL + immutable
 - 🔧 Troubleshooting
   - ⚠️ Ansible SSH auth failing → add device to known_hosts or disable StrictHostKeyChecking
   - ⚠️ Config drift → `ansible-playbook --diff` to detect differences → push correct state
